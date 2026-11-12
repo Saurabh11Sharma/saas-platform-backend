@@ -1,0 +1,37 @@
+{
+  "name": "saas-platform",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "apps/web",
+    "apps/gateway",
+    "apps/services/*"
+  ],
+  "engines": {
+    "node": ">=22.12.0",
+    "npm": ">=10.0.0"
+  },
+  "scripts": {
+    "dev:web": "npm run dev --workspace=@saas/web",
+    "dev:gateway": "npm run dev --workspace=@saas/gateway",
+    "dev:identity": "npm run dev --workspace=@saas/identity-service",
+    "dev:tenant": "npm run dev --workspace=@saas/tenant-service",
+    "dev:project": "npm run dev --workspace=@saas/project-service",
+    "dev:billing": "npm run dev --workspace=@saas/billing-service",
+    "dev:notification": "npm run dev --workspace=@saas/notification-service",
+    "dev:audit": "npm run dev --workspace=@saas/audit-service",
+    "build": "npm run build --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "prettier": "^3.6.2",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3"
+  },
+  "packageManager": "npm@11.6.2"
+}
