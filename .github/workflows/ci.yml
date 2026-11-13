@@ -20,7 +20,7 @@ jobs:
   verify:
     name: Build, test and smoke (Node ${{ matrix.node-version }})
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     strategy:
       fail-fast: false
       matrix:
@@ -37,7 +37,8 @@ jobs:
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: ${{ matrix.node-version }}
-          package-manager-cache: false
+          cache: npm
+          cache-dependency-path: package-lock.json
 
       - name: Use the repository-pinned npm version
         run: |
@@ -45,15 +46,8 @@ jobs:
           test "$(npm --version)" = "11.6.2"
           node --version
 
-      - name: Install dependencies
-        run: |
-          if git ls-files --error-unmatch package-lock.json >/dev/null 2>&1; then
-            npm ci --no-audit --no-fund
-          else
-            echo "::warning::No committed package-lock.json exists yet. Generating a temporary lockfile for this run; commit the generated lockfile artifact to make installs reproducible across runs."
-            npm install --package-lock-only --ignore-scripts --no-audit --no-fund
-            npm ci --no-audit --no-fund
-          fi
+      - name: Install locked dependencies
+        run: npm ci --no-audit --no-fund
 
       - name: Type-check all configured workspaces
         run: npm run typecheck
@@ -67,17 +61,8 @@ jobs:
       - name: Check formatting
         run: npm run format:check
 
-      - name: Audit installed dependencies
+      - name: Audit dependencies for high-severity vulnerabilities
         run: npm audit --audit-level=high
 
-      - name: Start services and verify readiness
+      - name: Start implemented services and verify readiness
         run: npm run smoke:services
-
-      - name: Upload generated lockfile for repository bootstrap
-        if: always() && matrix.node-version == '26' && hashFiles('package-lock.json') != ''
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          name: npm-lockfile-bootstrap
-          path: package-lock.json
-          if-no-files-found: error
-          retention-days: 7
