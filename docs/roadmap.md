@@ -4,17 +4,15 @@ This roadmap distinguishes verified implementation from the intended target arch
 
 ## Verified baseline
 
-| Capability | Status | Evidence and boundary |
-| --- | --- | --- |
-| npm workspaces, committed lockfile, strict TypeScript builds, formatting checks, and dependency audit | Implemented | Root scripts and the Node 22.12.0 / Node 26 CI matrix use `npm ci`. |
-| Five runnable NestJS processes | Implemented as service shells | API Gateway, Identity, Tenant, Project, and Billing build and start independently. Only Identity's `EmailAddress` value object and Gateway health aggregation contain focused business/edge behavior today. |
-| Liveness/readiness and gateway aggregate health | Implemented | Process smoke tests and the Compose smoke test exercise readiness. Aggregate health reports availability without returning internal service URLs. |
-| Local Docker Compose stack | Implemented for the current runnable slice | Five application containers plus PostgreSQL, MongoDB, Redis, and RabbitMQ start in CI. Infrastructure health does not mean application persistence or messaging integration. |
-| Identity email-address invariant | Implemented | Framework-independent value object and focused Node test-runner coverage. This is not registration or authentication. |
-| PostgreSQL persistence, service migrations, and real database integration tests | Planned | No service repository adapter or migration is currently wired into the runnable services; Compose only starts PostgreSQL. |
-| RabbitMQ publishing/consuming and versioned event contracts | Planned | RabbitMQ is selected and containerized, but applications do not connect to it. |
-| Next.js Web, Notification, and Audit applications | Planned | No runnable workspaces or containers exist for these applications. |
-| OpenTelemetry instrumentation and AWS deployment | Planned | No verified instrumentation, infrastructure-as-code deployment target, or CD workflow exists. |
+- **npm workspaces and CI — implemented:** the committed lockfile, strict TypeScript builds, Prettier checks, high-severity dependency audit, and Node 22.12.0 / Node 26 matrix use `npm ci`.
+- **Five runnable NestJS processes — implemented as service shells:** API Gateway, Identity, Tenant, Project, and Billing build and start independently. Only Identity's `EmailAddress` value object and Gateway health aggregation contain focused business/edge behavior today.
+- **Liveness/readiness and gateway aggregate health — implemented:** process smoke tests and the Compose smoke test exercise readiness. Aggregate health reports availability without returning internal service URLs.
+- **Local Docker Compose stack — implemented for the current runnable slice:** five application containers plus PostgreSQL, MongoDB, Redis, and RabbitMQ start in CI. Infrastructure health does not mean application persistence or messaging integration.
+- **Identity email-address invariant — implemented:** framework-independent value object and focused Node test-runner coverage. This is not registration or authentication.
+- **PostgreSQL persistence, service migrations, and real database integration tests — planned:** no service repository adapter or migration is currently wired into the runnable services; Compose only starts PostgreSQL.
+- **RabbitMQ publishing/consuming and versioned event contracts — planned:** RabbitMQ is selected and containerized, but applications do not connect to it.
+- **Next.js Web, Notification, and Audit applications — planned:** no runnable workspaces or containers exist for these applications.
+- **OpenTelemetry instrumentation and AWS deployment — planned:** no verified instrumentation, infrastructure-as-code deployment target, or CD workflow exists.
 
 ## Service implementation status
 
