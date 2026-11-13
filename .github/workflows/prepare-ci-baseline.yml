@@ -9,6 +9,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: prepare-ci-baseline-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   format-and-verify:
     if: github.ref == 'refs/heads/main'
@@ -38,35 +42,83 @@ jobs:
         run: npm ci --no-audit --no-fund
 
       - name: Apply repository Prettier rules
+        id: format
         run: npm run format
 
       - name: Verify formatting
+        id: formatting
         run: npm run format:check
 
       - name: Type-check all configured workspaces
+        id: typecheck
         run: npm run typecheck
 
       - name: Compile all configured workspaces
+        id: build
         run: npm run build
 
       - name: Run all configured workspace tests
+        id: tests
         run: npm test
 
       - name: Audit installed dependencies
+        id: audit
         run: npm audit --audit-level=high
 
       - name: Start services and verify readiness
+        id: smoke
         run: npm run smoke:services
 
-      - name: Commit formatting and reproducible lockfile
+      - name: Record results and commit only a verified baseline
+        if: always()
+        env:
+          FORMAT_OUTCOME: ${{ steps.format.outcome }}
+          FORMATTING_OUTCOME: ${{ steps.formatting.outcome }}
+          TYPECHECK_OUTCOME: ${{ steps.typecheck.outcome }}
+          BUILD_OUTCOME: ${{ steps.build.outcome }}
+          TESTS_OUTCOME: ${{ steps.tests.outcome }}
+          AUDIT_OUTCOME: ${{ steps.audit.outcome }}
+          SMOKE_OUTCOME: ${{ steps.smoke.outcome }}
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -u
-          git add package-lock.json
+          mkdir -p docs/progress
+          {
+            echo "# CI Baseline Preparation"
+            echo
+            echo "Recorded at: $(date -u +'%Y-%m-%d %H:%M:%S UTC')"
+            echo
+            echo "| Gate | Outcome |"
+            echo "|---|---|"
+            echo "| Prettier formatting applied | ${FORMAT_OUTCOME:-not-run} |"
+            echo "| Formatting verification | ${FORMATTING_OUTCOME:-not-run} |"
+            echo "| Workspace type-check | ${TYPECHECK_OUTCOME:-not-run} |"
+            echo "| Workspace build | ${BUILD_OUTCOME:-not-run} |"
+            echo "| Workspace tests | ${TESTS_OUTCOME:-not-run} |"
+            echo "| npm audit (high severity) | ${AUDIT_OUTCOME:-not-run} |"
+            echo "| Runtime service smoke test | ${SMOKE_OUTCOME:-not-run} |"
+            echo
+          } > docs/progress/ci-bootstrap-result.md
+
+          if [ "$FORMAT_OUTCOME" = "success" ] &&
+             [ "$FORMATTING_OUTCOME" = "success" ] &&
+             [ "$TYPECHECK_OUTCOME" = "success" ] &&
+             [ "$BUILD_OUTCOME" = "success" ] &&
+             [ "$TESTS_OUTCOME" = "success" ] &&
+             [ "$AUDIT_OUTCOME" = "success" ] &&
+             [ "$SMOKE_OUTCOME" = "success" ]; then
+            git add -u
+            git add package-lock.json docs/progress/ci-bootstrap-result.md
+            echo "All verification gates passed; formatting and lockfile changes are eligible for commit."
+          else
+            git add docs/progress/ci-bootstrap-result.md
+            echo "At least one verification gate did not pass; source formatting and lockfile changes will not be committed."
+          fi
+
           if git diff --cached --quiet; then
-            echo "No formatting or lockfile changes to commit."
+            echo "No result changes to commit."
             exit 0
           fi
-          git commit -m "chore: format repository and lock npm dependencies"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore: record CI baseline preparation"
           git push origin HEAD:main
