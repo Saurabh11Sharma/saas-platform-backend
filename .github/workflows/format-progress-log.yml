@@ -1,0 +1,57 @@
+name: Format progress log
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: format-progress-log-main
+  cancel-in-progress: true
+
+jobs:
+  format:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - name: Check out main
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Node.js 26
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '26'
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Use the repository-pinned npm version
+        run: |
+          npm install --global npm@11.6.2
+          test "$(npm --version)" = "11.6.2"
+
+      - name: Install locked dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Format the progress log
+        run: npx prettier --write docs/progress/daily-log.md
+
+      - name: Verify repository formatting
+        run: npm run format:check
+
+      - name: Commit the formatted progress log
+        run: |
+          git add docs/progress/daily-log.md
+          if git diff --cached --quiet; then
+            echo "Progress log was already formatted."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "style: format CI verification log"
+          git push origin HEAD:main
