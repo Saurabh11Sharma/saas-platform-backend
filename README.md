@@ -16,7 +16,7 @@ A full-stack, multi-tenant SaaS platform built as independently deployable micro
 | Contracts       | OpenAPI, versioned event schemas            | Explicit service contracts                        |
 | Runtime         | Docker, Docker Compose                      | Reproducible local environment                    |
 | Cloud           | AWS                                         | Container hosting, managed data, storage, secrets |
-| CI/CD           | GitHub Actions                              | Quality gates, image build, deployment            |
+| CI              | GitHub Actions                              | Build, test, audit, and Docker Compose smoke gates |
 | Testing         | Jest, Supertest, Testcontainers, Playwright | Unit, integration, contract, e2e                  |
 | Observability   | OpenTelemetry, Prometheus, Grafana, Loki    | Traces, metrics, logs                             |
 
@@ -83,7 +83,7 @@ docs/
 
 - [x] npm workspaces, shared TypeScript configuration, Prettier formatting, lockfile, and CI build/test/smoke baseline
 - [ ] Linting and broader static analysis
-- [ ] Docker Compose infrastructure and local developer experience
+- [x] Docker Compose infrastructure and local developer stack for the currently implemented backend services
 - [ ] Next.js web shell and NestJS gateway health endpoints
 - [ ] Identity: credentials, access/refresh tokens, rotation, revocation
 - [ ] Tenant: organizations, memberships, invitations, RBAC
@@ -96,9 +96,28 @@ docs/
 - [ ] Integration/contract/e2e tests, security checks, and load testing
 - [ ] AWS infrastructure as code, container deployment, and release pipeline
 
+## Containerized local runtime
+
+Use Docker Compose to start the local infrastructure and every backend application that currently has a runnable workspace:
+
+```bash
+docker compose config --quiet
+docker compose up -d --build --wait --wait-timeout 240
+docker compose ps
+npm run smoke:compose
+```
+
+The Compose stack builds separate Gateway, Identity, Tenant, Project, and Billing images from the shared multi-stage `infra/docker/node-service.Dockerfile`. Runtime images contain production dependencies and compiled output only, run as the unprivileged `node` user, and expose a readiness-based container health check. PostgreSQL, MongoDB, Redis, and RabbitMQ are also started with health checks.
+
+Application and infrastructure ports are bound to `127.0.0.1` by default. Override local credentials and ports with environment variables or a local `.env` file; the built-in passwords are for local development only. Do not reuse them outside a local machine.
+
+The Notification, Audit, and Web workspaces are not yet runnable applications and are not included as containers. The gateway health aggregation therefore reports a degraded platform until Notification and Audit are implemented and connected. The current application containers also do not yet use the database or broker connections; Compose currently verifies infrastructure startup and service readiness, not persistence or messaging integration.
+
+Stop containers with `docker compose down`. Persistent database volumes are retained; `docker compose down --volumes` deletes local database data.
+
 ## Development
 
-Use Node.js 22.12.0 or newer and npm 11.6.2 for the same toolchain as CI. Install the committed dependency graph and run the current backend verification suite:
+Use Node.js 22.12.0 or newer and npm 11.6.2 for the same toolchain as CI. Install the committed dependency graph and run the backend verification suite:
 
 ```bash
 npm ci
@@ -110,7 +129,7 @@ npm audit --audit-level=high
 npm run smoke:services
 ```
 
-The smoke test starts the implemented Identity, Tenant, Project, Billing, and API Gateway applications and checks their readiness and gateway aggregation. It does not require database or broker containers. See [CI and delivery](docs/ci-cd.md) for workflow coverage and the current deployment status.
+The direct-process smoke test starts the implemented Gateway and four backend services without infrastructure containers. The `smoke:compose` test verifies the running container stack. See [CI and delivery](docs/ci-cd.md) for complete workflow coverage and deployment status.
 
 Never commit real credentials. Production secrets belong in AWS Secrets Manager or an equivalent secret store.
 
