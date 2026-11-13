@@ -72,7 +72,9 @@ async function main() {
   );
 
   console.log('PASS api-gateway: aggregate health sees all four implemented services as healthy');
-  console.log('NOTE notification and audit are intentionally not containerized until their services exist');
+  console.log(
+    'NOTE notification and audit are intentionally not containerized until their services exist',
+  );
 }
 
 main().catch((error) => {
