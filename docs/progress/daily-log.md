@@ -47,7 +47,6 @@
 - **CD / blockers:** No deployment workflow was created because verified per-service container packaging and a deployment target are not yet present. Branch-protection settings could not be inspected or changed through the connected GitHub integration (the read endpoint returned HTTP 403); required status checks may still need to be configured by a repository administrator. Do not describe deployment or branch-protection enforcement as enabled.
 - **Next priority:** Add verified Docker packaging and local compose orchestration for the currently runnable services, then design a separately protected deployment workflow only after an actual target, environment configuration, health/rollback behavior, and least-privilege credentials are defined.
 
-
 ## 2026-11-13 — Containerization and Docker Compose CI
 
 - **Focus:** Package the currently runnable backend applications as independent containers and verify the full local stack in GitHub Actions.
