@@ -6,7 +6,6 @@ A full-stack, multi-tenant SaaS platform built as independently deployable micro
 
 | Area            | Technology                                  | Responsibility                                     |
 | --------------- | ------------------------------------------- | -------------------------------------------------- |
-| --------------- | ------------------------------------------- | -------------------------------------------------  |
 | Web             | Next.js App Router, React, TypeScript       | SaaS user experience                               |
 | Backend         | NestJS, TypeScript                          | Independently deployable domain services           |
 | Edge            | API Gateway / BFF                           | Routing, request policies, frontend composition    |
