@@ -19,4 +19,3 @@ A full-stack, multi-tenant SaaS platform built as independently deployable micro
 | CI              | GitHub Actions                              | Build, test, audit, and Docker Compose smoke gates |
 | Testing         | Jest, Supertest, Testcontainers, Playwright | Unit, integration, contract, e2e                   |
 | Observability   | OpenTelemetry, Prometheus, Grafana, Loki    | Traces, metrics, logs                              |
-
