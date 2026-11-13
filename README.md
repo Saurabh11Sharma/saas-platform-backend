@@ -17,7 +17,7 @@ A TypeScript SaaS platform repository being developed toward an independently de
 | Runtime         | Docker, Docker Compose                      | Reproducible local environment                    |
 | Cloud           | AWS                                         | Container hosting, managed data, storage, secrets |
 | CI/CD           | GitHub Actions                              | CI gates; deployment not configured               |
-| Testing         | node:test via tsx; more planned              | Unit tests now; integration/e2e planned          |
+| Testing         | node:test via tsx; more planned             | Unit tests now; integration/e2e planned           |
 | Observability   | OpenTelemetry, Prometheus, Grafana, Loki    | Traces, metrics, logs                             |
 
 The table describes the target stack, not a claim that every component is integrated. Current implementation and validation status are tracked in the [delivery roadmap](docs/roadmap.md). RabbitMQ is the selected broker. Kafka is not added alongside it without a concrete streaming requirement; operating two brokers would add unnecessary complexity.
