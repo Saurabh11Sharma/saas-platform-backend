@@ -97,7 +97,19 @@ docs/
 
 ## Development
 
-The local environment will use Node.js LTS, npm workspaces, Docker Compose, PostgreSQL, MongoDB, Redis, and RabbitMQ. Exact commands will be documented with the first runnable implementation milestone.
+Use Node.js and npm versions compatible with the root `package.json`. The current runnable backend checks are:
+
+```bash
+npm install --no-audit --no-fund
+npm run typecheck
+npm run build
+npm test
+npm run format:check
+npm audit --audit-level=high
+npm run smoke:services
+```
+
+The smoke command starts the currently implemented Identity, Tenant, Project, Billing, and API Gateway applications and checks their readiness endpoints. It does not require external databases or a message broker. See [CI and delivery](docs/ci-cd.md) for the GitHub Actions gates and current deployment limitations.
 
 Never commit real credentials. Production secrets belong in AWS Secrets Manager or an equivalent secret store.
 
