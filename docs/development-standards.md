@@ -5,7 +5,7 @@
 - Enable strict TypeScript options; avoid any and unsafe casts.
 - Validate untrusted input at HTTP and message boundaries.
 - Keep functions focused and side effects explicit.
-- CI runs typecheck, lint, tests, and build.
+- CI currently runs typecheck, build, configured workspace tests, Prettier formatting checks, high-severity dependency auditing, process startup smoke checks, and Docker Compose build/runtime smoke checks. Lint is not configured as a CI gate yet.
 - Pin supported runtime/tool versions and update dependencies deliberately.
 
 ## Service structure
