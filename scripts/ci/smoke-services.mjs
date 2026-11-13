@@ -41,6 +41,7 @@ function startApplication(application) {
     env: {
       ...process.env,
       [application.portVariable]: String(application.port),
+      ...application.environment,
     },
     stdio: ['ignore', 'pipe', 'pipe'],
   });
@@ -120,6 +121,12 @@ async function main() {
       entry: 'apps/gateway/dist/main.js',
       port: 4000,
       portVariable: 'GATEWAY_PORT',
+      environment: {
+        IDENTITY_URL: 'http://127.0.0.1:4101',
+        TENANT_URL: 'http://127.0.0.1:4102',
+        PROJECT_URL: 'http://127.0.0.1:4103',
+        BILLING_URL: 'http://127.0.0.1:4104',
+      },
     });
     await waitForReady(gateway);
 
