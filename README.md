@@ -81,7 +81,8 @@ docs/
 
 ## Delivery roadmap
 
-- [ ] Monorepo tooling, shared TypeScript configuration, linting, formatting, and CI
+- [x] npm workspaces, shared TypeScript configuration, Prettier formatting, lockfile, and CI build/test/smoke baseline
+- [ ] Linting and broader static analysis
 - [ ] Docker Compose infrastructure and local developer experience
 - [ ] Next.js web shell and NestJS gateway health endpoints
 - [ ] Identity: credentials, access/refresh tokens, rotation, revocation
@@ -97,7 +98,19 @@ docs/
 
 ## Development
 
-The local environment will use Node.js LTS, npm workspaces, Docker Compose, PostgreSQL, MongoDB, Redis, and RabbitMQ. Exact commands will be documented with the first runnable implementation milestone.
+Use Node.js 22.12.0 or newer and npm 11.6.2 for the same toolchain as CI. Install the committed dependency graph and run the current backend verification suite:
+
+```bash
+npm ci
+npm run typecheck
+npm run build
+npm test
+npm run format:check
+npm audit --audit-level=high
+npm run smoke:services
+```
+
+The smoke test starts the implemented Identity, Tenant, Project, Billing, and API Gateway applications and checks their readiness and gateway aggregation. It does not require database or broker containers. See [CI and delivery](docs/ci-cd.md) for workflow coverage and the current deployment status.
 
 Never commit real credentials. Production secrets belong in AWS Secrets Manager or an equivalent secret store.
 
