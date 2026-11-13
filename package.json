@@ -25,7 +25,8 @@
     "test": "npm run test --workspaces --if-present",
     "smoke:services": "node scripts/ci/smoke-services.mjs",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "smoke:compose": "node scripts/ci/smoke-compose.mjs"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",

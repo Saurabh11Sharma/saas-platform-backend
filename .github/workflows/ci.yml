@@ -66,3 +66,34 @@ jobs:
 
       - name: Start implemented services and verify readiness
         run: npm run smoke:services
+
+  container-smoke:
+    name: Docker Compose build and runtime
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Node.js for Compose smoke checks
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '22.12.0'
+          package-manager-cache: false
+
+      - name: Validate Docker Compose configuration
+        run: docker compose config --quiet
+
+      - name: Build and start the local infrastructure and service stack
+        run: docker compose up --detach --build --wait --wait-timeout 240
+
+      - name: Verify container readiness and gateway integration
+        run: npm run smoke:compose
+
+      - name: Show container logs when verification fails
+        if: failure()
+        run: docker compose logs --no-color --tail=120
+
+      - name: Stop containers and remove CI-only volumes
+        if: always()
+        run: docker compose down --volumes --remove-orphans

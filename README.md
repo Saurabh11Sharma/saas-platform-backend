@@ -16,7 +16,7 @@ A full-stack, multi-tenant SaaS platform built as independently deployable micro
 | Contracts       | OpenAPI, versioned event schemas            | Explicit service contracts                        |
 | Runtime         | Docker, Docker Compose                      | Reproducible local environment                    |
 | Cloud           | AWS                                         | Container hosting, managed data, storage, secrets |
-| CI/CD           | GitHub Actions                              | Quality gates, image build, deployment            |
+| CI/CD           | GitHub Actions                              | CI gates; deployment not configured               |
 | Testing         | Jest, Supertest, Testcontainers, Playwright | Unit, integration, contract, e2e                  |
 | Observability   | OpenTelemetry, Prometheus, Grafana, Loki    | Traces, metrics, logs                             |
 
@@ -95,6 +95,23 @@ docs/
 - [ ] OpenTelemetry, metrics, dashboards, logs, and runbooks
 - [ ] Integration/contract/e2e tests, security checks, and load testing
 - [ ] AWS infrastructure as code, container deployment, and release pipeline
+
+## Containerized local runtime
+
+The local Compose stack builds independent containers for the currently runnable API Gateway, Identity, Tenant, Project, and Billing applications. It also starts PostgreSQL, MongoDB, Redis, and RabbitMQ with container health checks.
+
+```bash
+docker compose config --quiet
+docker compose up -d --build --wait --wait-timeout 240
+docker compose ps
+npm run smoke:compose
+```
+
+The applications use separate images built from `infra/docker/node-service.Dockerfile`. The runtime stage contains compiled application output and production dependencies, runs as the unprivileged `node` user, and defines a readiness health check. Host ports are bound to `127.0.0.1` by default. Local development credentials can be overridden with environment variables or a local `.env` file; never reuse the defaults outside a local development environment.
+
+The Web, Notification, and Audit applications are not runnable implementations yet and are not included in Compose. The gateway therefore reports a degraded platform while Notification and Audit are unavailable. The current backend applications do not yet connect to PostgreSQL, MongoDB, Redis, or RabbitMQ. Compose verifies infrastructure/container startup and application readiness, not persistence or messaging integration.
+
+Stop the stack with `docker compose down`. Persistent volumes are retained. Use `docker compose down --volumes` only when you intend to delete local database data.
 
 ## Development
 
