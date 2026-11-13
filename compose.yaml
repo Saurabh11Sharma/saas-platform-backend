@@ -1,4 +1,5 @@
 name: saas-platform-local
+
 services:
   postgres:
     image: postgres:17-alpine
@@ -13,10 +14,11 @@ services:
       - postgres_data:/var/lib/postgresql/data
       - ./infra/docker/postgres/init-databases.sh:/docker-entrypoint-initdb.d/10-init-databases.sh:ro
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U saas_dev -d platform_admin']
+      test: ['CMD-SHELL', 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
       interval: 5s
       timeout: 5s
       retries: 10
+
   mongodb:
     image: mongo:8.0
     restart: unless-stopped
@@ -28,10 +30,15 @@ services:
     volumes:
       - mongodb_data:/data/db
     healthcheck:
-      test: ['CMD', 'mongosh', '--quiet', '--eval', "db.adminCommand('ping').ok"]
+      test:
+        [
+          'CMD-SHELL',
+          'mongosh --quiet --username "$${MONGO_INITDB_ROOT_USERNAME}" --password "$${MONGO_INITDB_ROOT_PASSWORD}" --authenticationDatabase admin --eval "db.adminCommand({ ping: 1 }).ok"',
+        ]
       interval: 10s
       timeout: 5s
       retries: 10
+
   redis:
     image: redis:7.4-alpine
     restart: unless-stopped
@@ -45,6 +52,7 @@ services:
       interval: 5s
       timeout: 3s
       retries: 10
+
   rabbitmq:
     image: rabbitmq:4-management-alpine
     restart: unless-stopped
@@ -61,6 +69,113 @@ services:
       interval: 10s
       timeout: 5s
       retries: 10
+
+  identity:
+    image: saas-platform/identity:local
+    build:
+      context: .
+      dockerfile: infra/docker/node-service.Dockerfile
+      args:
+        NODE_IMAGE: ${NODE_IMAGE:-node:22-bookworm-slim}
+        SERVICE_WORKSPACE: '@saas/identity-service'
+        SERVICE_PATH: services/identity
+        SERVICE_PORT: '4101'
+        SERVICE_ENTRY: apps/services/identity/dist/main.js
+    environment:
+      NODE_ENV: production
+      IDENTITY_PORT: '4101'
+    ports:
+      - '127.0.0.1:${IDENTITY_PORT:-4101}:4101'
+    restart: unless-stopped
+
+  tenant:
+    image: saas-platform/tenant:local
+    build:
+      context: .
+      dockerfile: infra/docker/node-service.Dockerfile
+      args:
+        NODE_IMAGE: ${NODE_IMAGE:-node:22-bookworm-slim}
+        SERVICE_WORKSPACE: '@saas/tenant-service'
+        SERVICE_PATH: services/tenant
+        SERVICE_PORT: '4102'
+        SERVICE_ENTRY: apps/services/tenant/dist/main.js
+    environment:
+      NODE_ENV: production
+      TENANT_PORT: '4102'
+    ports:
+      - '127.0.0.1:${TENANT_PORT:-4102}:4102'
+    restart: unless-stopped
+
+  project:
+    image: saas-platform/project:local
+    build:
+      context: .
+      dockerfile: infra/docker/node-service.Dockerfile
+      args:
+        NODE_IMAGE: ${NODE_IMAGE:-node:22-bookworm-slim}
+        SERVICE_WORKSPACE: '@saas/project-service'
+        SERVICE_PATH: services/project
+        SERVICE_PORT: '4103'
+        SERVICE_ENTRY: apps/services/project/dist/main.js
+    environment:
+      NODE_ENV: production
+      PROJECT_PORT: '4103'
+    ports:
+      - '127.0.0.1:${PROJECT_PORT:-4103}:4103'
+    restart: unless-stopped
+
+  billing:
+    image: saas-platform/billing:local
+    build:
+      context: .
+      dockerfile: infra/docker/node-service.Dockerfile
+      args:
+        NODE_IMAGE: ${NODE_IMAGE:-node:22-bookworm-slim}
+        SERVICE_WORKSPACE: '@saas/billing-service'
+        SERVICE_PATH: services/billing
+        SERVICE_PORT: '4104'
+        SERVICE_ENTRY: apps/services/billing/dist/main.js
+    environment:
+      NODE_ENV: production
+      BILLING_PORT: '4104'
+    ports:
+      - '127.0.0.1:${BILLING_PORT:-4104}:4104'
+    restart: unless-stopped
+
+  gateway:
+    image: saas-platform/gateway:local
+    build:
+      context: .
+      dockerfile: infra/docker/node-service.Dockerfile
+      args:
+        NODE_IMAGE: ${NODE_IMAGE:-node:22-bookworm-slim}
+        SERVICE_WORKSPACE: '@saas/gateway'
+        SERVICE_PATH: gateway
+        SERVICE_PORT: '4000'
+        SERVICE_ENTRY: apps/gateway/dist/main.js
+    environment:
+      NODE_ENV: production
+      GATEWAY_PORT: '4000'
+      WEB_ORIGIN: ${WEB_ORIGIN:-http://localhost:3000}
+      IDENTITY_URL: http://identity:4101
+      TENANT_URL: http://tenant:4102
+      PROJECT_URL: http://project:4103
+      BILLING_URL: http://billing:4104
+      NOTIFICATION_URL: http://notification:4105
+      AUDIT_URL: http://audit:4106
+    ports:
+      - '127.0.0.1:${GATEWAY_PORT:-4000}:4000'
+    depends_on:
+      identity:
+        condition: service_healthy
+      tenant:
+        condition: service_healthy
+      project:
+        condition: service_healthy
+      billing:
+        condition: service_healthy
+    restart: unless-stopped
+
 volumes:
   postgres_data:
   mongodb_data:
