@@ -13,15 +13,32 @@ const targets = [
 export class PlatformHealthController {
   @Get('health')
   async getPlatformHealth() {
-    const services = await Promise.all(targets.map(async (target) => {
-      const url = target.url + '/api/v1/health/ready';
-      try {
-        const response = await fetch(url, { signal: AbortSignal.timeout(1500) });
-        return { name: target.name, status: response.ok ? 'ok' : 'unavailable', url };
-      } catch {
-        return { name: target.name, status: 'unavailable', url };
-      }
-    }));
-    return { gateway: 'ok', status: services.every((service) => service.status === 'ok') ? 'ok' : 'degraded', checkedAt: new Date().toISOString(), services };
+    const services = await Promise.all(
+      targets.map(async (target) => {
+        const url = target.url + '/api/v1/health/ready';
+
+        try {
+          const response = await fetch(url, {
+            signal: AbortSignal.timeout(1500),
+          });
+
+          return {
+            name: target.name,
+            status: response.ok ? 'ok' : 'unavailable',
+          };
+        } catch {
+          return { name: target.name, status: 'unavailable' };
+        }
+      }),
+    );
+
+    return {
+      gateway: 'ok',
+      status: services.every((service) => service.status === 'ok')
+        ? 'ok'
+        : 'degraded',
+      checkedAt: new Date().toISOString(),
+      services,
+    };
   }
 }
