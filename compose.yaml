@@ -85,7 +85,7 @@ services:
       NODE_ENV: production
       IDENTITY_PORT: '4101'
     ports:
-      - '127.0.0.1:${IDENTITY_PORT:-4101}:4101'
+      - '127.0.0.1:${IDENTITY_HOST_PORT:-4101}:4101'
     restart: unless-stopped
 
   tenant:
@@ -103,7 +103,7 @@ services:
       NODE_ENV: production
       TENANT_PORT: '4102'
     ports:
-      - '127.0.0.1:${TENANT_PORT:-4102}:4102'
+      - '127.0.0.1:${TENANT_HOST_PORT:-4102}:4102'
     restart: unless-stopped
 
   project:
@@ -121,7 +121,7 @@ services:
       NODE_ENV: production
       PROJECT_PORT: '4103'
     ports:
-      - '127.0.0.1:${PROJECT_PORT:-4103}:4103'
+      - '127.0.0.1:${PROJECT_HOST_PORT:-4103}:4103'
     restart: unless-stopped
 
   billing:
@@ -139,7 +139,7 @@ services:
       NODE_ENV: production
       BILLING_PORT: '4104'
     ports:
-      - '127.0.0.1:${BILLING_PORT:-4104}:4104'
+      - '127.0.0.1:${BILLING_HOST_PORT:-4104}:4104'
     restart: unless-stopped
 
   gateway:
@@ -164,7 +164,7 @@ services:
       NOTIFICATION_URL: http://notification:4105
       AUDIT_URL: http://audit:4106
     ports:
-      - '127.0.0.1:${GATEWAY_PORT:-4000}:4000'
+      - '127.0.0.1:${GATEWAY_HOST_PORT:-4000}:4000'
     depends_on:
       identity:
         condition: service_healthy
