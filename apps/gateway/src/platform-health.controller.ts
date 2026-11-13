@@ -34,9 +34,7 @@ export class PlatformHealthController {
 
     return {
       gateway: 'ok',
-      status: services.every((service) => service.status === 'ok')
-        ? 'ok'
-        : 'degraded',
+      status: services.every((service) => service.status === 'ok') ? 'ok' : 'degraded',
       checkedAt: new Date().toISOString(),
       services,
     };

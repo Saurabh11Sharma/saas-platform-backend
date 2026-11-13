@@ -4,7 +4,12 @@ import { Controller, Get } from '@nestjs/common';
 export class HealthController {
   @Get('live')
   live() {
-    return { service: 'billing', status: 'ok', timestamp: new Date().toISOString(), uptimeSeconds: Math.floor(process.uptime()) };
+    return {
+      service: 'billing',
+      status: 'ok',
+      timestamp: new Date().toISOString(),
+      uptimeSeconds: Math.floor(process.uptime()),
+    };
   }
   @Get('ready')
   ready() {

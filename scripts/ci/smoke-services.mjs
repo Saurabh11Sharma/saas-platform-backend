@@ -54,7 +54,13 @@ function startApplication(application) {
   child.stdout.on('data', appendOutput);
   child.stderr.on('data', appendOutput);
 
-  const instance = { ...application, child, get output() { return output; } };
+  const instance = {
+    ...application,
+    child,
+    get output() {
+      return output;
+    },
+  };
   running.push(instance);
   return instance;
 }
@@ -73,7 +79,11 @@ async function waitForReady(application) {
 
     try {
       const response = await fetch(url, { signal: AbortSignal.timeout(1_000) });
-      assert.equal(response.status, 200, `${application.name} readiness endpoint returned HTTP ${response.status}`);
+      assert.equal(
+        response.status,
+        200,
+        `${application.name} readiness endpoint returned HTTP ${response.status}`,
+      );
 
       const body = await response.json();
       assert.equal(body.service, application.name);
@@ -141,9 +151,7 @@ async function main() {
     assert.ok(Number.isFinite(Date.parse(aggregate.checkedAt)));
     assert.ok(Array.isArray(aggregate.services));
 
-    const serviceStatuses = new Map(
-      aggregate.services.map((service) => [service.name, service]),
-    );
+    const serviceStatuses = new Map(aggregate.services.map((service) => [service.name, service]));
 
     for (const service of services) {
       assert.equal(

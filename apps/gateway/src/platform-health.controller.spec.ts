@@ -28,9 +28,7 @@ describe('PlatformHealthController', () => {
       assert.ok(result.services.every((service) => service.status === 'ok'));
       assert.ok(result.services.every((service) => !('url' in service)));
       assert.equal(requestedUrls.length, 6);
-      assert.ok(
-        requestedUrls.every((url) => url.endsWith('/api/v1/health/ready')),
-      );
+      assert.ok(requestedUrls.every((url) => url.endsWith('/api/v1/health/ready')));
     } finally {
       globalThis.fetch = originalFetch;
     }

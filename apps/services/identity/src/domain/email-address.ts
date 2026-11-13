@@ -72,8 +72,7 @@ export class EmailAddress {
     if (
       labels.length < 2 ||
       labels.some(
-        (label) =>
-          label.length === 0 || label.length > 63 || !DOMAIN_LABEL_PATTERN.test(label),
+        (label) => label.length === 0 || label.length > 63 || !DOMAIN_LABEL_PATTERN.test(label),
       )
     ) {
       return false;
