@@ -1,0 +1,72 @@
+name: Prepare CI baseline
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  format-and-verify:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: write
+    steps:
+      - name: Check out main
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Node.js 26
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '26'
+          package-manager-cache: false
+
+      - name: Use the repository-pinned npm version
+        run: |
+          npm install --global npm@11.6.2
+          test "$(npm --version)" = "11.6.2"
+
+      - name: Generate the initial npm lockfile
+        run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+
+      - name: Install exact locked dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Apply repository Prettier rules
+        run: npm run format
+
+      - name: Verify formatting
+        run: npm run format:check
+
+      - name: Type-check all configured workspaces
+        run: npm run typecheck
+
+      - name: Compile all configured workspaces
+        run: npm run build
+
+      - name: Run all configured workspace tests
+        run: npm test
+
+      - name: Audit installed dependencies
+        run: npm audit --audit-level=high
+
+      - name: Start services and verify readiness
+        run: npm run smoke:services
+
+      - name: Commit formatting and reproducible lockfile
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -u
+          git add package-lock.json
+          if git diff --cached --quiet; then
+            echo "No formatting or lockfile changes to commit."
+            exit 0
+          fi
+          git commit -m "chore: format repository and lock npm dependencies"
+          git push origin HEAD:main
