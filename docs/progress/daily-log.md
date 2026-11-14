@@ -135,9 +135,17 @@
 - **Main CI SHA:** `293cfb43b3dce68371ab92188eba1151f195871b`.
 - **PR CI #33:** Tests passed; Prettier failed on the daily log; Compose passed.
 - **PR CI #34:** Same daily-log Prettier failure; Compose passed.
-- **PR CI #35:** Same formatting failure after tests passed; Compose passed.
+- **PR CI #35-#36:** Both failed on daily-log formatting; Compose passed.
 - **Docs commit:** `a22d6f9f400f44a116643947c9c875b0a59f2ceb`.
 - **Log-format commit:** `4a1ac578723ca68d8b4bcd8170203ae5385b750b`.
+- **Log-format commit:** `2f92fb4b5f8dfcce377f5ad702b1754e311f07d1`.
+- **Log-format commit:** `03a0a34a61ea57b8a6e4d51d0efc4861355f30c0`.
+- **Final log commit:** `56d158155c6ced8d560de61698514fc02fefc6f4`.
+- **Final PR CI #37:** All three required jobs passed on the exact PR head.
+- **Final PR SHA:** `56d158155c6ced8d560de61698514fc02fefc6f4`.
+- **Final tests:** Node 22.12.0 and Node 26 each passed 20 unit tests.
+- **Final quality:** Prettier passed; audit found zero high-severity issues.
+- **Final Compose:** Five applications and four infrastructure containers passed health checks.
 - **Local validation:** No local shell or npm/test/formatter execution was available.
 - **Architecture:** Domain/application remains framework-independent; no DB sharing.
 - **Blockers:** No Identity DB adapter, migration, hasher, API, or DB tests.
