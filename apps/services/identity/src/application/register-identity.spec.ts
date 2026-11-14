@@ -1,10 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { EmailAddress, InvalidEmailAddressError } from '../domain/email-address';
-import {
-  Identity,
-  IdentityEmailAlreadyRegisteredError,
-} from '../domain/identity';
+import { Identity, IdentityEmailAlreadyRegisteredError } from '../domain/identity';
 import { PasswordHash } from '../domain/password-hash';
 import {
   InvalidRegistrationPasswordError,

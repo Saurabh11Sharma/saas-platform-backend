@@ -1,11 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { EmailAddress, InvalidEmailAddressError } from './email-address';
-import {
-  Identity,
-  InvalidIdentityCreatedAtError,
-  InvalidIdentityIdError,
-} from './identity';
+import { Identity, InvalidIdentityCreatedAtError, InvalidIdentityIdError } from './identity';
 import { InvalidPasswordHashError, PasswordHash } from './password-hash';
 
 describe('Identity', () => {
