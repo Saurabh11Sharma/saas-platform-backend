@@ -101,41 +101,44 @@
 - **Next step:** In an npm-capable environment, add a direct PostgreSQL driver to the Identity workspace and regenerate `package-lock.json` with npm; then implement the Identity-only migration/repository, password hasher, validated HTTP mapping, and disposable-PostgreSQL integration tests. Do not mark registration complete until those tests run in CI.
 ## 2026-11-14 — Evening quality, documentation, and daily review (20:30 IST)
 
-- **Focus:** Align README, CI docs, roadmap, and daily log with verified Identity work.
-- **Docs:** Describe registration as an in-progress application slice, not a complete feature.
-- **Docs:** Record 20 unit tests (18 Identity, 2 Gateway) and no PostgreSQL integration coverage.
-- **Files:** `README.md`, `docs/ci-cd.md`, `docs/roadmap.md`, `docs/progress/daily-log.md`.
-- **Main:** `293cfb43b3dce68371ab92188eba1151f195871b` is the current main head and PR #4 merge.
-- **PR:** #5 uses `automation/saas-platform-2026-11-14` and targets that main SHA.
-- **PR before evening:** head `99e50e7d1b0ef3cbdc617857adc88d6c192e6439`; 6 ahead, 0 behind.
-- **Morning run:** `d7f3ec19-f27c-832f-b27b-7f0f4c6bf82a` completed.
-- **Morning outcome:** Added Identity aggregate, PasswordHash, use case, and outbound ports.
-- **Morning tests:** Added 13 Identity tests; no local tests were run by that slot.
-- **Morning commit:** `3b09acb425f0c23fbb4bdd6adbfdeaa412f9ccdc` added the application slice.
-- **Morning commit:** `02b9bc053402c4b87180d21bfc980d417a9d7521` refined tests and contracts.
-- **Morning commit:** `13d30ab9a863f067ecc407400f1a21ca6062dcbc` formatted test imports.
-- **Morning commit:** `9cf4971186bb624df623a86ceeebcec878d14dea` refined test fixture typing.
-- **Morning handoff:** `9450de4aba96f259b2e796f8bd3b7593292daef7` updated the daily log.
-- **Morning paths:** Identity manifest, application ports/use case/tests, and domain files.
-- **Morning CI:** PR runs #30 and #31 passed all three required jobs on their exact heads.
-- **Midday run:** `38db5b7f-5d90-8326-b36f-6ddfc2f7a73e` completed.
-- **Midday outcome:** No application code or tests were added; only the daily log changed.
-- **Midday commit:** `99e50e7d1b0ef3cbdc617857adc88d6c192e6439` records the blocker.
-- **Midday blocker:** No PostgreSQL driver is locked and this session has no npm shell.
-- **Midday validation:** No local commands or PostgreSQL integration tests were executed.
-- **PR CI #32:** Passed all three jobs on exact head `99e50e7d1b0ef3cbdc617857adc88d6c192e6439`.
-- **PR CI #32 tests:** Node 22.12.0 ran 18 Identity and 2 Gateway tests; all passed.
-- **PR CI #32 containers:** Compose started five applications and four infrastructure containers.
-- **Evening run:** `72af24b9-c378-832a-86e2-2663080fe774` started at 23:05 IST, 2h35 late.
-- **Main CI #27:** Passed all three required jobs on the current main commit.
+- **Focus:** Reconcile public docs with the Identity work in shared PR #5.
+- **Docs:** Clarify registration is an application slice, not a complete feature.
+- **Docs:** Record 20 unit tests and state that PostgreSQL integration is absent.
+- **Files:** README, CI guide, roadmap, and daily log.
+- **Main SHA:** `293cfb43b3dce68371ab92188eba1151f195871b`.
+- **PR branch:** `automation/saas-platform-2026-11-14` targets main.
+- **PR base:** `293cfb43b3dce68371ab92188eba1151f195871b`.
+- **PR pre-evening head:** `99e50e7d1b0ef3cbdc617857adc88d6c192e6439`.
+- **PR pre-evening comparison:** 6 commits ahead and 0 behind main.
+- **Morning run ID:** `d7f3ec19-f27c-832f-b27b-7f0f4c6bf82a` (completed).
+- **Morning outcome:** Identity aggregate, use case, value object, and ports added.
+- **Morning tests:** 13 Identity tests added; no local tests were run.
+- **Morning code commit:** `3b09acb425f0c23fbb4bdd6adbfdeaa412f9ccdc`.
+- **Morning test commit:** `02b9bc053402c4b87180d21bfc980d417a9d7521`.
+- **Morning style commit:** `13d30ab9a863f067ecc407400f1a21ca6062dcbc`.
+- **Morning style commit:** `9cf4971186bb624df623a86ceeebcec878d14dea`.
+- **Morning log commit:** `9450de4aba96f259b2e796f8bd3b7593292daef7`.
+- **Morning paths:** See the preceding 08:30 entry for the full Identity file list.
+- **Morning CI:** PR runs #30 and #31 passed all three required checks.
+- **Midday run ID:** `38db5b7f-5d90-8326-b36f-6ddfc2f7a73e` (completed).
+- **Midday outcome:** No application code or tests were added.
+- **Midday commit:** `99e50e7d1b0ef3cbdc617857adc88d6c192e6439` (daily log only).
+- **Midday blocker:** No PostgreSQL driver is locked; this session has no npm shell.
+- **Midday validation:** No local commands or database integration tests were run.
+- **PR CI #32:** All three checks passed on the exact midday head.
+- **PR CI #32 tests:** Node 22.12.0 passed 18 Identity and 2 Gateway tests.
+- **PR CI #32 Compose:** Five apps and four infrastructure containers started.
+- **Evening run ID:** `72af24b9-c378-832a-86e2-2663080fe774`.
+- **Evening timing:** Started 23:05 IST, about 2h35 after its 20:30 slot.
+- **Main CI #27:** Node 22.12.0, Node 26, and Compose all passed.
 - **Main CI SHA:** `293cfb43b3dce68371ab92188eba1151f195871b`.
-- **PR CI #33:** Tests passed, then Prettier failed on `docs/progress/daily-log.md`.
-- **PR CI #33 Compose:** Passed the Docker Compose build and runtime job.
-- **PR CI #34:** Repeated the daily-log Prettier failure; Compose passed.
-- **Evening commit:** `a22d6f9f400f44a116643947c9c875b0a59f2ceb` reconciled README and roadmap docs.
-- **Formatting follow-up:** `4a1ac578723ca68d8b4bcd8170203ae5385b750b` adjusted the daily log.
-- **Local validation:** No local shell, npm install, tests, or formatter execution was available.
-- **Architecture:** Domain/application imports stay framework-independent; no DB sharing added.
-- **Blockers:** No Identity migration, adapter, hasher, HTTP API, or real DB tests exist.
-- **Security:** Password strength, maximum input, and registration rate limiting remain undecided.
-- **Next:** Finish Identity PostgreSQL, hashing, HTTP API, and real CI integration tests.
+- **PR CI #33:** Tests passed; Prettier failed on the daily log; Compose passed.
+- **PR CI #34:** Same daily-log Prettier failure; Compose passed.
+- **PR CI #35:** Same formatting failure after tests passed; Compose passed.
+- **Docs commit:** `a22d6f9f400f44a116643947c9c875b0a59f2ceb`.
+- **Log-format commit:** `4a1ac578723ca68d8b4bcd8170203ae5385b750b`.
+- **Local validation:** No local shell or npm/test/formatter execution was available.
+- **Architecture:** Domain/application remains framework-independent; no DB sharing.
+- **Blockers:** No Identity DB adapter, migration, hasher, API, or DB tests.
+- **Security:** Password policy and registration rate limiting remain undecided.
+- **Next:** Finish Identity PostgreSQL, hashing, HTTP API, and CI integration tests.
