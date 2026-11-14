@@ -5,10 +5,11 @@ This roadmap distinguishes verified implementation from the intended target arch
 ## Verified baseline
 
 - **npm workspaces and CI — implemented:** the committed lockfile, strict TypeScript builds, Prettier checks, high-severity dependency audit, and Node 22.12.0 / Node 26 matrix use `npm ci`.
-- **Five runnable NestJS processes — implemented as service shells:** API Gateway, Identity, Tenant, Project, and Billing build and start independently. Only Identity's `EmailAddress` value object and Gateway health aggregation contain focused business/edge behavior today.
+- **Five runnable NestJS processes — implemented as service shells:** API Gateway, Identity, Tenant, Project, and Billing build and start independently. Identity now also has a framework-independent registration domain/application slice in progress; Gateway has bounded-timeout aggregate health behavior.
 - **Liveness/readiness and gateway aggregate health — implemented:** process smoke tests and the Compose smoke test exercise readiness. Aggregate health reports availability without returning internal service URLs.
 - **Local Docker Compose stack — implemented for the current runnable slice:** five application containers plus PostgreSQL, MongoDB, Redis, and RabbitMQ start in CI. Infrastructure health does not mean application persistence or messaging integration.
-- **Identity email-address invariant — implemented:** framework-independent value object and focused Node test-runner coverage. This is not registration or authentication.
+- **Identity email-address invariant — implemented:** framework-independent value object and focused Node test-runner coverage.
+- **Identity registration application slice — in progress:** Identity aggregate, redaction-safe PasswordHash value object, RegisterIdentity use case, and IdentityRepository / PasswordHasher outbound ports are implemented and covered by 18 unit tests. There is no concrete hasher, PostgreSQL driver/migration/repository adapter, registration HTTP endpoint, or real database integration test.
 - **PostgreSQL persistence, service migrations, and real database integration tests — planned:** no service repository adapter or migration is currently wired into the runnable services; Compose only starts PostgreSQL.
 - **RabbitMQ publishing/consuming and versioned event contracts — planned:** RabbitMQ is selected and containerized, but applications do not connect to it.
 - **Next.js Web, Notification, and Audit applications — planned:** no runnable workspaces or containers exist for these applications.
@@ -17,7 +18,7 @@ This roadmap distinguishes verified implementation from the intended target arch
 ## Service implementation status
 
 - **Gateway:** process health, readiness, and bounded-timeout aggregate downstream health checks are implemented. Public business routing, authentication/authorization policies, request correlation, and BFF composition remain future work.
-- **Identity:** `EmailAddress` is implemented and tested. Registration, password hashing, token/session lifecycle, API validation, persistence, and authentication flows remain future work.
+- **Identity:** `EmailAddress`, the Identity aggregate, and PasswordHash value object are implemented. The framework-independent RegisterIdentity use case and its outbound ports are in progress and unit-tested. A concrete adaptive password hasher, Identity-owned PostgreSQL migration/repository, validated HTTP boundary, real database integration tests, and token/session lifecycle are still outstanding.
 - **Tenant:** runnable process and health endpoints only. Tenant lifecycle, membership, role/permission checks, and tenant-isolation tests remain future work.
 - **Project:** runnable process and health endpoints only. Project/task use cases, persistence, and tenant authorization remain future work.
 - **Billing:** runnable process and health endpoints only. Subscription/entitlement workflows, webhook verification, idempotency, and provider adapters remain future work.
@@ -35,7 +36,7 @@ Acceptance criteria:
 4. Add domain/application unit tests and integration tests against a disposable real PostgreSQL instance; execute those integration tests in CI.
 5. Document configuration, migration/startup failure behavior, duplicate registration behavior, and local verification commands.
 
-The existing `EmailAddress` value object is a foundation, not a completed registration flow. Keep the first slice narrow and do not add persistence to every service at once.
+The existing `EmailAddress` value object and the new RegisterIdentity application slice are foundations, not a completed registration flow. Keep the first slice narrow and do not add persistence to every service at once.
 
 ## Platform maturity after the first vertical slice
 

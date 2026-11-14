@@ -17,7 +17,7 @@ Each matrix job runs:
 5. Run `npm audit --audit-level=high`.
 6. Start Identity, Tenant, Project, Billing, and the API Gateway as processes; verify readiness and gateway aggregation.
 
-The configured tests use Node.js's built-in `node:test` runner through `tsx --test`. The current suite covers the Identity `EmailAddress` value object and Gateway platform-health aggregation. PostgreSQL integration, RabbitMQ contract, Testcontainers, Supertest, browser end-to-end, and load tests are not currently wired into CI.
+The configured tests use Node.js's built-in `node:test` runner through `tsx --test`. The current suite contains 20 unit tests (18 Identity and 2 Gateway). Identity coverage includes the `EmailAddress` value object, aggregate invariants, `PasswordHash` redaction, and `RegisterIdentity` application orchestration. The registration tests exercise outbound ports with test implementations; they do not validate a real password-hashing algorithm or a PostgreSQL adapter. PostgreSQL integration, RabbitMQ contract, Testcontainers, Supertest, browser end-to-end, and load tests are not currently wired into CI.
 
 ### Docker Compose build and runtime
 
@@ -29,7 +29,7 @@ The shared Dockerfile produces a separate image per service using build argument
 
 The runnable workspaces currently include the Gateway and four backend services. The planned Web, Notification, and Audit applications do not yet have runnable package manifests and are not represented as built or healthy containers. The gateway reports a degraded platform while Notification and Audit are absent.
 
-Compose currently verifies that the database and broker containers start and become healthy, but the backend services do not yet establish persistence or RabbitMQ connections. This is not yet a database integration, messaging integration, Testcontainers, contract, browser end-to-end, or load test.
+Compose currently verifies that the database and broker containers start and become healthy, but the backend services do not yet establish persistence or RabbitMQ connections. The Identity workspace has no PostgreSQL driver, migration, or repository adapter, and its PasswordHasher port has no concrete implementation. The registration use case is therefore not yet a working HTTP or persisted account-creation flow. This is not yet a database integration, messaging integration, Testcontainers, contract, browser end-to-end, or load test.
 
 ## Run locally
 

@@ -17,6 +17,11 @@ describe('EmailAddress', () => {
     assert.equal(first.equals(second), true);
   });
 
+  it('rejects non-string input without exposing the supplied value', () => {
+    assert.throws(() => EmailAddress.create(42), InvalidEmailAddressError);
+    assert.throws(() => EmailAddress.create(null), InvalidEmailAddressError);
+  });
+
   it('rejects malformed addresses without exposing the supplied value', () => {
     const invalidAddresses = [
       '',

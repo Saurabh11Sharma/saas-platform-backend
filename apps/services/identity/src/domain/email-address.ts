@@ -20,7 +20,7 @@ export class EmailAddress {
     Object.freeze(this);
   }
 
-  static create(input: string): EmailAddress {
+  static create(input: unknown): EmailAddress {
     if (typeof input !== 'string') {
       throw new InvalidEmailAddressError();
     }

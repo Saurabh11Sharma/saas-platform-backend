@@ -7,7 +7,7 @@
     "build": "tsc -p tsconfig.json",
     "start": "node dist/main.js",
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "test": "tsx --test src/domain/email-address.spec.ts"
+    "test": "tsx --test src/domain/email-address.spec.ts src/domain/identity.spec.ts src/application/register-identity.spec.ts"
   },
   "dependencies": {
     "@nestjs/common": "12.4.2",

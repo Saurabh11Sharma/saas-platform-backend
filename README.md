@@ -32,7 +32,7 @@ See [System Architecture](docs/architecture/system-architecture.md) and [Service
 ## Service boundaries and current implementation status
 
 - **API Gateway / BFF — partial:** a runnable NestJS process with liveness/readiness endpoints and aggregate downstream health checks. Public business routing, authentication context, throttling, and frontend composition are not implemented.
-- **Identity — foundation:** a runnable NestJS process and a framework-independent `EmailAddress` value object with unit tests. Registration, password hashing, sessions, tokens, persistence, and authentication endpoints are not implemented.
+- **Identity — registration application slice in progress:** a runnable NestJS process plus framework-independent `EmailAddress` and `Identity` domain models, a redaction-safe `PasswordHash` value object, the `RegisterIdentity` use case, and outbound `IdentityRepository` / `PasswordHasher` ports. The 18 Identity unit tests cover domain invariants and use-case orchestration. No concrete password-hashing adapter, PostgreSQL repository or migration, registration HTTP endpoint, sessions, or tokens are implemented.
 - **Tenant — service shell:** a runnable NestJS process with health endpoints; tenant lifecycle, memberships, roles, authorization, and persistence are not implemented.
 - **Project — service shell:** a runnable NestJS process with health endpoints; project/task APIs and persistence are not implemented.
 - **Billing — service shell:** a runnable NestJS process with health endpoints; subscription workflows, provider integration, and persistence are not implemented.
@@ -46,7 +46,7 @@ The intended ownership model remains service-owned data and versioned integratio
 apps/
   gateway/                     # NestJS API Gateway / BFF
   services/
-    identity/                  # NestJS service + EmailAddress domain primitive
+    identity/                  # NestJS process + registration domain/application slice
     tenant/                    # NestJS service shell
     project/                   # NestJS service shell
     billing/                   # NestJS service shell
@@ -80,6 +80,7 @@ scripts/
 - [x] Docker Compose infrastructure and local developer experience for the five runnable NestJS processes
 - [x] NestJS liveness/readiness endpoints and gateway platform-health aggregation
 - [ ] Next.js web shell
+- [ ] Identity registration: domain/application use case and outbound ports are in progress; Identity-owned PostgreSQL persistence, concrete password hashing, validated HTTP API, and database integration tests remain outstanding
 - [ ] Identity: credentials, access/refresh tokens, rotation, revocation
 - [ ] Tenant: organizations, memberships, invitations, RBAC
 - [ ] Project: tenant-scoped project/task workflows
@@ -124,7 +125,7 @@ npm audit --audit-level=high
 npm run smoke:services
 ```
 
-The smoke test starts the implemented Identity, Tenant, Project, Billing, and API Gateway applications and checks their readiness and gateway aggregation. It does not require database or broker containers. See [CI and delivery](docs/ci-cd.md) for workflow coverage and the current deployment status.
+The smoke test starts the implemented Identity, Tenant, Project, Billing, and API Gateway applications and checks their readiness and gateway aggregation. It does not require database or broker containers. Identity's registration use case is application code only: its outbound ports have no concrete adapters, so it does not create persisted accounts or expose an HTTP registration endpoint. See [CI and delivery](docs/ci-cd.md) for workflow coverage and the current deployment status.
 
 Never commit real credentials. Production secrets belong in AWS Secrets Manager or an equivalent secret store.
 
