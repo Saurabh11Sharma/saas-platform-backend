@@ -11,10 +11,12 @@ import {
 import { IdentityRepository, NewIdentity } from './ports/identity-repository';
 import { PasswordHasher } from './ports/password-hasher';
 
-function createHarness(options: {
+interface HarnessOptions {
   readonly repository?: IdentityRepository;
   readonly passwordHasher?: PasswordHasher;
-} = {}) {
+}
+
+function createHarness(options: HarnessOptions = {}) {
   const created: NewIdentity[] = [];
   const hashedPasswords: string[] = [];
 
