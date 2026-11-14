@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { EmailAddress } from './email-address';
+import { EmailAddress, InvalidEmailAddressError } from './email-address';
 import {
   Identity,
   InvalidIdentityCreatedAtError,
@@ -46,7 +46,7 @@ describe('Identity', () => {
           passwordHash: PasswordHash.fromEncoded('test-only-hash'),
           createdAt: new Date('2026-11-14T03:00:00.000Z'),
         }),
-      Error,
+      InvalidEmailAddressError,
     );
   });
 
@@ -74,5 +74,12 @@ describe('Identity', () => {
         }),
       InvalidIdentityCreatedAtError,
     );
+  });
+
+  it('does not expose the encoded hash through default serialization', () => {
+    const hash = PasswordHash.fromEncoded('test-only-hash');
+
+    assert.equal(JSON.stringify(hash), '{}');
+    assert.equal(hash.toString(), '[REDACTED]');
   });
 });

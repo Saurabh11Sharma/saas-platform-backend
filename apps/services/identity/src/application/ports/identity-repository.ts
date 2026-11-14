@@ -1,5 +1,5 @@
-import { Identity, IdentityEmailAlreadyRegisteredError } from '../../domain/identity';
 import { EmailAddress } from '../../domain/email-address';
+import { Identity } from '../../domain/identity';
 import { PasswordHash } from '../../domain/password-hash';
 
 export interface NewIdentity {
@@ -20,6 +20,3 @@ export interface NewIdentity {
 export interface IdentityRepository {
   create(input: NewIdentity): Promise<Identity>;
 }
-
-// Keep the domain conflict in the port's public contract for adapter authors.
-export type IdentityEmailConflict = IdentityEmailAlreadyRegisteredError;

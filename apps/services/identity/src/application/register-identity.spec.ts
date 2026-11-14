@@ -6,7 +6,11 @@ import {
   IdentityEmailAlreadyRegisteredError,
 } from '../domain/identity';
 import { PasswordHash } from '../domain/password-hash';
-import { RegisterIdentity, InvalidRegistrationPasswordError, InvalidRegistrationRequestError } from './register-identity';
+import {
+  InvalidRegistrationPasswordError,
+  InvalidRegistrationRequestError,
+  RegisterIdentity,
+} from './register-identity';
 import { IdentityRepository, NewIdentity } from './ports/identity-repository';
 import { PasswordHasher } from './ports/password-hasher';
 
@@ -45,7 +49,7 @@ function createHarness(options: {
 }
 
 describe('RegisterIdentity', () => {
-  it('normalizes email, hashes the password, persists the aggregate, and returns no credential data', async () => {
+  it('normalizes email, hashes before persistence, and omits credential data', async () => {
     const { useCase, created, hashedPasswords } = createHarness();
 
     const result = await useCase.execute({
@@ -68,10 +72,7 @@ describe('RegisterIdentity', () => {
   it('rejects a non-object request before invoking dependencies', async () => {
     const { useCase, created, hashedPasswords } = createHarness();
 
-    await assert.rejects(
-      useCase.execute(null),
-      InvalidRegistrationRequestError,
-    );
+    await assert.rejects(useCase.execute(null), InvalidRegistrationRequestError);
 
     assert.equal(hashedPasswords.length, 0);
     assert.equal(created.length, 0);
