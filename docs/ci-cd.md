@@ -17,6 +17,8 @@ Each matrix job runs:
 5. Run `npm audit --audit-level=high`.
 6. Start Identity, Tenant, Project, Billing, and the API Gateway as processes; verify readiness and gateway aggregation.
 
+The configured tests use Node.js's built-in `node:test` runner through `tsx --test`. The current suite covers the Identity `EmailAddress` value object and Gateway platform-health aggregation. PostgreSQL integration, RabbitMQ contract, Testcontainers, Supertest, browser end-to-end, and load tests are not currently wired into CI.
+
 ### Docker Compose build and runtime
 
 The `container-smoke` job validates `compose.yaml`, builds the current application images from `infra/docker/node-service.Dockerfile`, and starts the full local stack with Docker Compose. Compose waits for PostgreSQL, MongoDB, Redis, RabbitMQ, the four backend services, and the Gateway to become healthy. The `smoke:compose` script then verifies all five application readiness endpoints and confirms that the Gateway sees all four implemented downstream services as healthy without exposing internal URLs. CI collects logs on failure and tears down containers and temporary volumes afterward.

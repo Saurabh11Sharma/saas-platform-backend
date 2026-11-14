@@ -1,26 +1,26 @@
 # SaaS Platform — Distributed Systems Reference Implementation
 
-A full-stack, multi-tenant SaaS platform built as independently deployable microservices. The goal is to demonstrate production-grade engineering across frontend, backend, data, messaging, security, observability, testing, and cloud delivery.
+A TypeScript SaaS platform repository being developed toward an independently deployable, multi-tenant microservices architecture. The current runnable slice is the NestJS API Gateway plus Identity, Tenant, Project, and Billing service processes, packaged independently and exercised by GitHub Actions. The web application, business APIs, PostgreSQL persistence, RabbitMQ integration, audit read model, OpenTelemetry instrumentation, and AWS deployment are not implemented yet; see the [delivery roadmap](docs/roadmap.md) for verified status.
 
-## Technology stack
+## Target technology stack
 
-| Area            | Technology                                  | Responsibility                                    |
-| --------------- | ------------------------------------------- | ------------------------------------------------- |
-| Web             | Next.js App Router, React, TypeScript       | SaaS user experience                              |
-| Backend         | NestJS, TypeScript                          | Independently deployable domain services          |
-| Edge            | API Gateway / BFF                           | Routing, request policies, frontend composition   |
-| Relational data | PostgreSQL, Prisma                          | Service-owned transactional data                  |
-| Document data   | MongoDB                                     | Audit/activity read models where appropriate      |
-| Cache           | Redis                                       | Caching, rate limits, distributed coordination    |
-| Messaging       | RabbitMQ                                    | Domain events and background work                 |
-| Contracts       | OpenAPI, versioned event schemas            | Explicit service contracts                        |
-| Runtime         | Docker, Docker Compose                      | Reproducible local environment                    |
-| Cloud           | AWS                                         | Container hosting, managed data, storage, secrets |
-| CI/CD           | GitHub Actions                              | CI gates; deployment not configured               |
-| Testing         | Jest, Supertest, Testcontainers, Playwright | Unit, integration, contract, e2e                  |
-| Observability   | OpenTelemetry, Prometheus, Grafana, Loki    | Traces, metrics, logs                             |
+| Area            | Technology                               | Responsibility                                    |
+| --------------- | ---------------------------------------- | ------------------------------------------------- |
+| Web             | Next.js App Router, React, TypeScript    | SaaS user experience                              |
+| Backend         | NestJS, TypeScript                       | Independently deployable domain services          |
+| Edge            | API Gateway / BFF                        | Routing, request policies, frontend composition   |
+| Relational data | PostgreSQL, Prisma                       | Service-owned transactional data                  |
+| Document data   | MongoDB                                  | Audit/activity read models where appropriate      |
+| Cache           | Redis                                    | Caching, rate limits, distributed coordination    |
+| Messaging       | RabbitMQ                                 | Domain events and background work                 |
+| Contracts       | OpenAPI, versioned event schemas         | Explicit service contracts                        |
+| Runtime         | Docker, Docker Compose                   | Reproducible local environment                    |
+| Cloud           | AWS                                      | Container hosting, managed data, storage, secrets |
+| CI/CD           | GitHub Actions                           | CI gates; deployment not configured               |
+| Testing         | node:test via tsx; more planned          | Unit tests now; integration/e2e planned           |
+| Observability   | OpenTelemetry, Prometheus, Grafana, Loki | Traces, metrics, logs                             |
 
-RabbitMQ is the selected broker. Kafka is not added alongside it without a concrete streaming requirement; operating two brokers would add unnecessary complexity.
+The table describes the target stack, not a claim that every component is integrated. Current implementation and validation status are tracked in the [delivery roadmap](docs/roadmap.md). RabbitMQ is the selected broker. Kafka is not added alongside it without a concrete streaming requirement; operating two brokers would add unnecessary complexity.
 
 ## High-level architecture
 
@@ -29,41 +29,35 @@ Services publish and consume integration events through RabbitMQ. PostgreSQL is 
 
 See [System Architecture](docs/architecture/system-architecture.md) and [Service Boundaries](docs/architecture/service-boundaries.md).
 
-## Planned services
+## Service boundaries and current implementation status
 
-- **API Gateway / BFF:** edge routing, request correlation, throttling, authentication context propagation, and frontend composition.
-- **Identity:** registration, login, password security, refresh-token rotation, sessions, and account security.
-- **Tenant:** organizations, memberships, invitations, tenant lifecycle, roles, and permissions.
-- **Project:** projects, tasks, assignments, and project lifecycle.
-- **Billing:** plans, subscriptions, invoices, payment-provider integration, and webhook processing.
-- **Notification:** email/in-app notifications, templates, preferences, and retryable delivery workers.
-- **Audit:** security and business audit events, retention, and searchable activity history.
+- **API Gateway / BFF — partial:** a runnable NestJS process with liveness/readiness endpoints and aggregate downstream health checks. Public business routing, authentication context, throttling, and frontend composition are not implemented.
+- **Identity — foundation:** a runnable NestJS process and a framework-independent `EmailAddress` value object with unit tests. Registration, password hashing, sessions, tokens, persistence, and authentication endpoints are not implemented.
+- **Tenant — service shell:** a runnable NestJS process with health endpoints; tenant lifecycle, memberships, roles, authorization, and persistence are not implemented.
+- **Project — service shell:** a runnable NestJS process with health endpoints; project/task APIs and persistence are not implemented.
+- **Billing — service shell:** a runnable NestJS process with health endpoints; subscription workflows, provider integration, and persistence are not implemented.
+- **Web, Notification, and Audit — planned:** no runnable workspace or container is present yet.
 
-Each service owns its data and publishes versioned integration events. No service reads or writes another service's database.
+The intended ownership model remains service-owned data and versioned integration events. No current service-to-service database access is implemented; persistence and messaging integrations remain future work.
 
 ## Repository layout
 
 ```text
 apps/
-  web/                         # Next.js frontend
   gateway/                     # NestJS API Gateway / BFF
   services/
-    identity/
-    tenant/
-    project/
-    billing/
-    notification/
-    audit/
-packages/
-  contracts/                   # Shared API/event schemas, not domain logic
-  observability/               # OpenTelemetry setup
-  config/                       # Shared tooling configuration
+    identity/                  # NestJS service + EmailAddress domain primitive
+    tenant/                    # NestJS service shell
+    project/                   # NestJS service shell
+    billing/                   # NestJS service shell
 infra/
-  docker/
-  aws/
+  docker/                      # Node service image and local PostgreSQL setup
 docs/
   architecture/
-  runbooks/
+    decisions/
+  progress/
+scripts/
+  ci/
 ```
 
 ## Architectural principles
@@ -83,8 +77,9 @@ docs/
 
 - [x] npm workspaces, shared TypeScript configuration, Prettier formatting, lockfile, and CI build/test/smoke baseline
 - [ ] Linting and broader static analysis
-- [ ] Docker Compose infrastructure and local developer experience
-- [ ] Next.js web shell and NestJS gateway health endpoints
+- [x] Docker Compose infrastructure and local developer experience for the five runnable NestJS processes
+- [x] NestJS liveness/readiness endpoints and gateway platform-health aggregation
+- [ ] Next.js web shell
 - [ ] Identity: credentials, access/refresh tokens, rotation, revocation
 - [ ] Tenant: organizations, memberships, invitations, RBAC
 - [ ] Project: tenant-scoped project/task workflows
@@ -95,6 +90,8 @@ docs/
 - [ ] OpenTelemetry, metrics, dashboards, logs, and runbooks
 - [ ] Integration/contract/e2e tests, security checks, and load testing
 - [ ] AWS infrastructure as code, container deployment, and release pipeline
+
+See the [detailed delivery roadmap](docs/roadmap.md) for the current implementation boundary, acceptance criteria, and next vertical slice.
 
 ## Containerized local runtime
 
