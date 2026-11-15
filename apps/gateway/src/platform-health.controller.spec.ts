@@ -74,9 +74,8 @@ describe('PlatformHealthController', () => {
       globalThis.fetch = originalFetch;
     }
   });
-  it(
-    'marks a timed-out downstream health check unavailable without stalling aggregation',
-    async () => {
+
+  it('handles a downstream timeout without stalling aggregation', async () => {
     const originalFetch = globalThis.fetch;
     let identitySignal: AbortSignal | undefined;
 
@@ -127,5 +126,4 @@ describe('PlatformHealthController', () => {
       globalThis.fetch = originalFetch;
     }
   });
-
 });
