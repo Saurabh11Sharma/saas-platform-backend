@@ -74,4 +74,56 @@ describe('PlatformHealthController', () => {
       globalThis.fetch = originalFetch;
     }
   });
+  it('marks a timed-out downstream health check unavailable without stalling aggregation', async () => {
+    const originalFetch = globalThis.fetch;
+    let identitySignal: AbortSignal | undefined;
+
+    const timeoutFetch: typeof fetch = async (input, init) => {
+      if (String(input).includes('localhost:4101')) {
+        const signal = init?.signal;
+        assert.ok(signal instanceof AbortSignal);
+        identitySignal = signal;
+
+        return await new Promise<Response>((_resolve, reject) => {
+          const fallback = setTimeout(() => {
+            reject(new Error('Identity health check did not abort'));
+          }, 2_000);
+
+          signal.addEventListener(
+            'abort',
+            () => {
+              clearTimeout(fallback);
+              reject(signal.reason);
+            },
+            { once: true },
+          );
+        });
+      }
+
+      return new Response(null, { status: 204 });
+    };
+
+    globalThis.fetch = timeoutFetch;
+
+    try {
+      const startedAt = Date.now();
+      const result = await new PlatformHealthController().getPlatformHealth();
+
+      assert.equal(identitySignal?.aborted, true);
+      assert.ok(Date.now() - startedAt < 2_000);
+      assert.equal(result.status, 'degraded');
+      assert.equal(
+        result.services.find((service) => service.name === 'identity')?.status,
+        'unavailable',
+      );
+      assert.ok(
+        result.services
+          .filter((service) => service.name !== 'identity')
+          .every((service) => service.status === 'ok'),
+      );
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+
 });
