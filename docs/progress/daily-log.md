@@ -186,3 +186,42 @@
 - **Validation:** Main CI [run #43](https://github.com/Saurabh11Sharma/saas-platform-backend/actions/runs/43673632125) completed successfully for exact main SHA `f6054afdeaadd14972f2ca861bc5bed4603cb298`; Node 22.12.0, Node 26, and Docker Compose jobs all passed. Previous Identity PR CI [run #42](https://github.com/Saurabh11Sharma/saas-platform-backend/actions/runs/43625291697) passed all three required jobs on exact pre-merge head `ddf4fcd40a31e17180c22254c1bbbd98e1492417`. No tests were added or executed in this run, and no local shell/npm execution was available.
 - **Blockers / unverified:** Identity registration remains an application slice, not a working public registration flow. There is no Identity PostgreSQL driver, migration, repository adapter, concrete adaptive password hasher, registration HTTP endpoint, or real database integration test. Password strength/maximum input and registration rate limiting remain unresolved. The successful CI runs validate the existing application/unit-test/Compose baseline, not persistence or authentication behavior.
 - **Next step:** Continue the same RegisterIdentity vertical slice at its outer boundaries in an npm-capable environment: select and lock a PostgreSQL driver through npm; add the Identity-owned migration and atomic repository insert with a database-enforced unique normalized-email constraint (no read-before-write check); implement a vetted adaptive hasher with unique salts and versioned hashes; add a validated HTTP boundary and safe error mapping; and execute disposable-PostgreSQL tests including concurrent duplicate registration. Keep the domain/application layer framework-independent and never access another service's database.
+
+## 2026-11-15 — Service/API integration increment (11:30 IST)
+
+- **Focus:** Strengthen the Gateway-to-service readiness boundary and verify its timeout failure
+  behavior without introducing business logic into the Gateway.
+- **Change:** Added a regression test that holds the Identity readiness request open until the
+  existing 1.5-second `AbortSignal.timeout` aborts it. The aggregate health endpoint must return
+  `degraded`, report Identity as `unavailable`, and preserve healthy results for the other
+  downstream checks. No production controller behavior or dependencies changed.
+- **Files changed:** `apps/gateway/src/platform-health.controller.spec.ts` and this daily log.
+- **Code commits:** `61dda20d4007c51465e5940d998de070d084c396` added the timeout test;
+  `b4f0cf0defe5f76fac0836abede947156e1b55a4` and
+  `c63bd937d1d8428c46dfba3258b11757dbdf7761` corrected formatting. The final tested code head
+  was `c63bd937d1d8428c46dfba3258b11757dbdf7761`.
+- **Main CI:** [Run #43](https://github.com/Saurabh11Sharma/saas-platform-backend/actions/runs/43673632125)
+  passed Node 22.12.0, Node 26, and Docker Compose on exact main SHA
+  `f6054afdeaadd14972f2ca861bc5bed4603cb298`.
+- **PR CI attempts:** Runs
+  [#43683982211](https://github.com/Saurabh11Sharma/saas-platform-backend/actions/runs/43683982211)
+  and
+  [#43684083320](https://github.com/Saurabh11Sharma/saas-platform-backend/actions/runs/43684083320)
+  failed only at Prettier on the new test; the Docker Compose job passed in both runs. The
+  formatting was corrected without weakening any gate.
+- **Final PR validation:** [Run #43684186572](https://github.com/Saurabh11Sharma/saas-platform-backend/actions/runs/43684186572)
+  passed all three required jobs on exact head
+  `c63bd937d1d8428c46dfba3258b11757dbdf7761`. Node 22.12.0 and Node 26 each passed typecheck,
+  build, all 21 tests (3 Gateway and 18 Identity), Prettier, high-severity npm audit (0
+  vulnerabilities), and service readiness/aggregate smoke. Docker Compose configuration,
+  build, container readiness, gateway aggregate smoke, and cleanup all passed.
+- **Local validation:** No local shell/npm commands were available; all executed validation
+  evidence above comes from the exact GitHub Actions run. No PostgreSQL integration test ran.
+- **Blockers / unverified:** The Identity registration slice still has no PostgreSQL driver,
+  migration, repository adapter, concrete password hasher, registration HTTP endpoint, or
+  real database integration test. This run did not change persistence or authentication.
+  Password-strength/maximum-input and registration rate-limit policy remain unresolved.
+- **Next step:** In an npm-capable environment, continue the existing Identity use case with an
+  npm-generated PostgreSQL driver lockfile, Identity-owned migration and atomic repository
+  adapter, vetted adaptive hasher, validated HTTP boundary, and disposable-PostgreSQL tests.
+  Keep the domain/application ports framework-independent and the database service-owned.
