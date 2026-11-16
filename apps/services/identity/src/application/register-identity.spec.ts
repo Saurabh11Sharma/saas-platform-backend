@@ -77,6 +77,22 @@ describe('RegisterIdentity', () => {
     assert.equal(created.length, 0);
   });
 
+  it('rejects unexpected fields before invoking dependencies', async () => {
+    const { useCase, created, hashedPasswords } = createHarness();
+
+    await assert.rejects(
+      useCase.execute({
+        email: 'ada@example.com',
+        password: 'a-test-password',
+        role: 'admin',
+      }),
+      InvalidRegistrationRequestError,
+    );
+
+    assert.equal(hashedPasswords.length, 0);
+    assert.equal(created.length, 0);
+  });
+
   it('rejects an invalid email before hashing or persistence', async () => {
     const { useCase, created, hashedPasswords } = createHarness();
 
