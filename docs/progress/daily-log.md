@@ -254,3 +254,46 @@
 - **Midday handoff:** Continue the same `RegisterIdentity` vertical slice. `Identity` remains the aggregate; `EmailAddress` normalizes the address and `PasswordHash` keeps the encoded credential out of default serialization and the use-case result. `IdentityRepository.create(NewIdentity)` must perform one atomic insert into the Identity-owned PostgreSQL database, enforce a unique constraint on normalized email, and translate only that matching uniqueness violation to `IdentityEmailAlreadyRegisteredError`; do not add a read-before-write uniqueness check. The insert is one local transaction; any future outbox row must share it. No other service may access this database. The outer layer still needs a vetted adaptive `PasswordHasher` adapter with unique salts/versioned hashes, an HTTP DTO/controller that also rejects unknown fields, safe error mapping, and disposable-PostgreSQL tests including concurrent duplicate attempts.
 - **Blockers / unverified:** No PostgreSQL driver, migration, repository adapter, concrete hasher, registration endpoint, or real database integration test exists. Password-strength/maximum-input and registration rate-limit policies remain unresolved. This validation hardening does not complete public registration or authentication.
 - **Next step:** Run the Identity unit suite and full three-job PR CI, then continue the persistence/API adapter work in an npm-capable environment without changing domain/application dependencies.
+
+## 2026-11-16 — Service/API integration increment (11:30 IST)
+
+- **Focus:** Restore the `RegisterIdentity` command's missing-password validation behavior after
+  the morning over-posting guard changed the existing application contract.
+- **Change:** Replaced the exact-two-key check with an allowlist check that requires an own
+  `email` field and permits only `email` / `password` own keys. Unexpected own keys (including
+  symbols, caller-supplied `role`, and `tenantId`) remain rejected before hashing or repository
+  access. A missing or empty password now reaches `InvalidRegistrationPasswordError`, preserving
+  the existing use-case contract. Domain/application code remains independent of NestJS and
+  persistence.
+- **Files changed:** `apps/services/identity/src/application/register-identity.ts` and this log.
+  The morning slot's focused unit-test file was not modified in this slot.
+- **Code commits:** `a829316507db9e3a6a705d886835180179236f5d` restored missing-password validation;
+  `c3dd9cbcd47661e1ccb6bb6ef1f07b6815da8ca1` applied the repository's Prettier formatting.
+  The latter was the final code head before this log update.
+- **Main CI:** [Run #52](https://github.com/Saurabh11Sharma/saas-platform-backend/actions/runs/43796114156)
+  passed Node 22.12.0, Node 26, and Docker Compose on exact main SHA
+  `ad85bc78679f3e55d53f68a9729a2cf1e907f82e`.
+- **PR CI diagnosis:** [Run #53](https://github.com/Saurabh11Sharma/saas-platform-backend/actions/runs/43796361140)
+  failed both Node jobs at the Identity unit-test step because the exact-two-key guard treated a
+  missing password as an invalid request shape. The Docker Compose job passed.
+  [Run #54](https://github.com/Saurabh11Sharma/saas-platform-backend/actions/runs/43816856208)
+  passed tests but failed both Node jobs at Prettier for the corrected source formatting; Docker
+  Compose passed. Neither failure was bypassed or used to weaken CI.
+- **Final PR validation:** [Run #55](https://github.com/Saurabh11Sharma/saas-platform-backend/actions/runs/43817014636)
+  completed successfully on exact code head
+  `c3dd9cbcd47661e1ccb6bb6ef1f07b6815da8ca1`. Node 22.12.0 and Node 26 passed locked install,
+  typecheck, build, all configured tests, Prettier, high-severity npm audit, and service readiness
+  smoke. Docker Compose passed configuration validation, image build/start, container readiness,
+  Gateway integration smoke, and cleanup.
+- **Local validation:** No local shell/npm commands were available. No tests were run locally; the
+  successful validation above is from the exact GitHub Actions run.
+- **Blockers / unverified:** Identity still has no PostgreSQL driver, migration, repository adapter,
+  concrete password hasher, registration HTTP endpoint, or real PostgreSQL integration test.
+  Compose's current PostgreSQL initialization creates service databases under the same
+  `POSTGRES_USER`; provision an Identity-only least-privilege role and verify it cannot access
+  other service databases before enabling persistence. Password-strength/maximum-input and
+  registration rate-limit policies remain unresolved. This run does not complete registration.
+- **Next step:** Continue the same Identity vertical slice in an npm-capable environment: add the
+  least-privilege Identity database role, npm-generated PostgreSQL dependency/lockfile, Identity
+  migration and atomic repository adapter, vetted adaptive hasher, validated HTTP boundary, and
+  disposable-PostgreSQL tests for concurrent duplicate registration and cross-database isolation.
