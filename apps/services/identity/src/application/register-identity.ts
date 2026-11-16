@@ -29,10 +29,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 function hasSupportedRegistrationFields(command: Record<string, unknown>): boolean {
   const keys = Reflect.ownKeys(command);
 
-  return (
-    keys.includes('email') &&
-    keys.every((key) => key === 'email' || key === 'password')
-  );
+  return keys.includes('email') && keys.every((key) => key === 'email' || key === 'password');
 }
 
 /**
