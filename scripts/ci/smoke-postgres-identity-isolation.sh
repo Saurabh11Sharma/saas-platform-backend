@@ -7,24 +7,26 @@ export PGPASSWORD="$IDENTITY_DB_PASSWORD"
 
 psql --no-psqlrc --no-password --host=127.0.0.1 \
   --username="$IDENTITY_DB_USER" --dbname=identity_db \
-  --set=ON_ERROR_STOP=1 --set=identity_user="$IDENTITY_DB_USER" \
-  --command="
-    SELECT CASE
-      WHEN current_database() = 'identity_db'
-        AND current_user = :'identity_user'
-        AND has_schema_privilege(current_user, 'identity', 'USAGE')
-        AND NOT has_schema_privilege(current_user, 'identity', 'CREATE')
-      THEN 1
-      ELSE 1 / 0
-    END
-  "
+  --set=ON_ERROR_STOP=1 --set=identity_user="$IDENTITY_DB_USER" <<'SQL'
+SELECT CASE
+  WHEN current_database() = 'identity_db'
+    AND current_user = :'identity_user'
+    AND has_schema_privilege(current_user, 'identity', 'USAGE')
+    AND NOT has_schema_privilege(current_user, 'identity', 'CREATE')
+  THEN 1
+  ELSE 1 / 0
+END;
+SQL
 
 for database in "$POSTGRES_DB" postgres template1 tenant_db project_db billing_db notification_db; do
-  exists="$(psql --no-psqlrc --no-password --host=127.0.0.1 \
-    --username="$IDENTITY_DB_USER" --dbname=identity_db \
-    --set=ON_ERROR_STOP=1 --set=database="$database" \
-    --tuples-only --no-align \
-    --command="SELECT 1 FROM pg_catalog.pg_database WHERE datname = :'database'")"
+  exists="$(
+    psql --no-psqlrc --no-password --host=127.0.0.1 \
+      --username="$IDENTITY_DB_USER" --dbname=identity_db \
+      --set=ON_ERROR_STOP=1 --set=database="$database" \
+      --tuples-only --no-align <<'SQL'
+SELECT 1 FROM pg_catalog.pg_database WHERE datname = :'database';
+SQL
+  )"
 
   if [[ "$exists" != "1" ]]; then
     echo "FAIL expected database $database was not initialized" >&2

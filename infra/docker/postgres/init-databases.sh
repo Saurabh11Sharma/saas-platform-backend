@@ -43,33 +43,35 @@ ALTER ROLE identity_owner NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICAT
 SQL
 
 # Refuse to reuse an existing privileged role or a role that owns another database.
-role_exists="$(admin_psql --tuples-only --no-align \
-  --set=identity_user="$IDENTITY_DB_USER" \
-  --command="SELECT 1 FROM pg_catalog.pg_roles WHERE rolname = :'identity_user'")"
+role_exists="$(
+  admin_psql --tuples-only --no-align --set=identity_user="$IDENTITY_DB_USER" <<'SQL'
+SELECT 1 FROM pg_catalog.pg_roles WHERE rolname = :'identity_user';
+SQL
+)"
 
 if [[ "$role_exists" == "1" ]]; then
-  role_has_privileges="$(admin_psql --tuples-only --no-align \
-    --set=identity_user="$IDENTITY_DB_USER" \
-    --command="
-      SELECT 1
-      FROM pg_catalog.pg_roles AS role
-      WHERE role.rolname = :'identity_user'
-        AND (
-          role.rolsuper
-          OR role.rolcreatedb
-          OR role.rolcreaterole
-          OR role.rolreplication
-          OR role.rolbypassrls
-          OR EXISTS (
-            SELECT 1 FROM pg_catalog.pg_auth_members AS membership
-            WHERE membership.member = role.oid
-          )
-          OR EXISTS (
-            SELECT 1 FROM pg_catalog.pg_database AS database
-            WHERE database.datdba = role.oid
-          )
-        )
-    ")"
+  role_has_privileges="$(
+    admin_psql --tuples-only --no-align --set=identity_user="$IDENTITY_DB_USER" <<'SQL'
+SELECT 1
+FROM pg_catalog.pg_roles AS role
+WHERE role.rolname = :'identity_user'
+  AND (
+    role.rolsuper
+    OR role.rolcreatedb
+    OR role.rolcreaterole
+    OR role.rolreplication
+    OR role.rolbypassrls
+    OR EXISTS (
+      SELECT 1 FROM pg_catalog.pg_auth_members AS membership
+      WHERE membership.member = role.oid
+    )
+    OR EXISTS (
+      SELECT 1 FROM pg_catalog.pg_database AS database
+      WHERE database.datdba = role.oid
+    )
+  );
+SQL
+  )"
 
   if [[ "$role_has_privileges" == "1" ]]; then
     echo "IDENTITY_DB_USER already exists with elevated privileges or database ownership; choose a dedicated role name" >&2
