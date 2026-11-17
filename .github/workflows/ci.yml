@@ -87,6 +87,9 @@ jobs:
       - name: Build and start the local infrastructure and service stack
         run: docker compose up --detach --build --wait --wait-timeout 240
 
+      - name: Verify Identity PostgreSQL role isolation
+        run: bash scripts/ci/smoke-postgres-identity-isolation.sh
+
       - name: Verify container readiness and gateway integration
         run: npm run smoke:compose
 
