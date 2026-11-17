@@ -26,6 +26,12 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
+function hasSupportedRegistrationFields(command: Record<string, unknown>): boolean {
+  const keys = Reflect.ownKeys(command);
+
+  return keys.includes('email') && keys.every((key) => key === 'email' || key === 'password');
+}
+
 /**
  * Creates an Identity account without depending on NestJS or persistence details.
  *
@@ -40,7 +46,7 @@ export class RegisterIdentity {
   ) {}
 
   async execute(command: unknown): Promise<RegisterIdentityResult> {
-    if (!isRecord(command)) {
+    if (!isRecord(command) || !hasSupportedRegistrationFields(command)) {
       throw new InvalidRegistrationRequestError();
     }
 
