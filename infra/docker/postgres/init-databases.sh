@@ -42,25 +42,56 @@ WHERE NOT EXISTS (
 ALTER ROLE identity_owner NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS;
 SQL
 
-# Quote the role name and password as SQL values; never interpolate either into SQL text.
-admin_psql --set=identity_user="$IDENTITY_DB_USER" --set=identity_password="$IDENTITY_DB_PASSWORD" <<'SQL'
+# Refuse to reuse an existing privileged role or a role that owns another database.
+role_exists="$(admin_psql --tuples-only --no-align \
+  --set=identity_user="$IDENTITY_DB_USER" \
+  --command="SELECT 1 FROM pg_catalog.pg_roles WHERE rolname = :'identity_user'")"
+
+if [[ "$role_exists" == "1" ]]; then
+  role_has_privileges="$(admin_psql --tuples-only --no-align \
+    --set=identity_user="$IDENTITY_DB_USER" \
+    --command="
+      SELECT 1
+      FROM pg_catalog.pg_roles AS role
+      WHERE role.rolname = :'identity_user'
+        AND (
+          role.rolsuper
+          OR role.rolcreatedb
+          OR role.rolcreaterole
+          OR role.rolreplication
+          OR role.rolbypassrls
+          OR EXISTS (
+            SELECT 1 FROM pg_catalog.pg_auth_members AS membership
+            WHERE membership.member = role.oid
+          )
+          OR EXISTS (
+            SELECT 1 FROM pg_catalog.pg_database AS database
+            WHERE database.datdba = role.oid
+          )
+        )
+    ")"
+
+  if [[ "$role_has_privileges" == "1" ]]; then
+    echo "IDENTITY_DB_USER already exists with elevated privileges or database ownership; choose a dedicated role name" >&2
+    exit 1
+  fi
+
+  admin_psql --set=identity_user="$IDENTITY_DB_USER" <<'SQL'
+\getenv identity_password IDENTITY_DB_PASSWORD
+SELECT format('ALTER ROLE %I LOGIN PASSWORD %L', :'identity_user', :'identity_password')
+\gexec
+SQL
+else
+  admin_psql --set=identity_user="$IDENTITY_DB_USER" <<'SQL'
+\getenv identity_password IDENTITY_DB_PASSWORD
 SELECT format(
   'CREATE ROLE %I LOGIN PASSWORD %L NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS',
   :'identity_user',
   :'identity_password'
 )
-WHERE NOT EXISTS (
-  SELECT 1 FROM pg_catalog.pg_roles WHERE rolname = :'identity_user'
-)
-\gexec
-
-SELECT format(
-  'ALTER ROLE %I LOGIN PASSWORD %L NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS',
-  :'identity_user',
-  :'identity_password'
-)
 \gexec
 SQL
+fi
 
 for database in "${databases[@]}"; do
   exists="$(admin_psql --tuples-only --no-align \
@@ -108,9 +139,17 @@ psql --no-psqlrc --username "$POSTGRES_USER" --dbname identity_db \
 CREATE SCHEMA IF NOT EXISTS identity AUTHORIZATION identity_owner;
 ALTER SCHEMA identity OWNER TO identity_owner;
 REVOKE ALL ON SCHEMA public FROM PUBLIC;
+REVOKE ALL ON SCHEMA public FROM :"identity_user";
+REVOKE ALL ON SCHEMA identity FROM :"identity_user";
 GRANT USAGE ON SCHEMA identity TO :"identity_user";
+REVOKE ALL PRIVILEGES ON ALL TABLES IN SCHEMA identity FROM :"identity_user";
+REVOKE ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA identity FROM :"identity_user";
 GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA identity TO :"identity_user";
 GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA identity TO :"identity_user";
+ALTER DEFAULT PRIVILEGES FOR ROLE identity_owner IN SCHEMA identity
+  REVOKE ALL ON TABLES FROM :"identity_user";
+ALTER DEFAULT PRIVILEGES FOR ROLE identity_owner IN SCHEMA identity
+  REVOKE ALL ON SEQUENCES FROM :"identity_user";
 ALTER DEFAULT PRIVILEGES FOR ROLE identity_owner IN SCHEMA identity
   GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO :"identity_user";
 ALTER DEFAULT PRIVILEGES FOR ROLE identity_owner IN SCHEMA identity
