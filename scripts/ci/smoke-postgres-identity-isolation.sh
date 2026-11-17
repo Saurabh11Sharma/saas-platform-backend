@@ -29,10 +29,16 @@ IFS='|' read -r database_name role_name can_connect schema_usage schema_create i
 $access
 EOF
 
-if [[ "$database_name" != "identity_db" || "$role_name" != "$IDENTITY_DB_USER" ||
-  "$can_connect" != "t" || "$schema_usage" != "t" || "$schema_create" != "f" ||
-  "$is_superuser" != "f" || "$can_create_db" != "f" || "$can_create_role" != "f" ||
-  "$can_replicate" != "f" || "$can_bypass_rls" != "f" ]]; then
+if [ "$database_name" != "identity_db" ] ||
+  [ "$role_name" != "$IDENTITY_DB_USER" ] ||
+  [ "$can_connect" != "t" ] ||
+  [ "$schema_usage" != "t" ] ||
+  [ "$schema_create" != "f" ] ||
+  [ "$is_superuser" != "f" ] ||
+  [ "$can_create_db" != "f" ] ||
+  [ "$can_create_role" != "f" ] ||
+  [ "$can_replicate" != "f" ] ||
+  [ "$can_bypass_rls" != "f" ]; then
   echo "FAIL Identity role permissions are not least-privilege (database=$database_name, role=$role_name, connect=$can_connect, schema_usage=$schema_usage, schema_create=$schema_create, superuser=$is_superuser, createdb=$can_create_db, createrole=$can_create_role, replication=$can_replicate, bypassrls=$can_bypass_rls)" >&2
   exit 1
 fi
@@ -49,7 +55,7 @@ SELECT 1 FROM pg_catalog.pg_database WHERE datname = :'database';
 SQL
   )"
 
-  if [[ "$exists" != "1" ]]; then
+  if [ "$exists" != "1" ]; then
     echo "FAIL expected database $database was not initialized" >&2
     exit 1
   fi
