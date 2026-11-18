@@ -3,12 +3,21 @@ set -Eeuo pipefail
 
 docker compose exec -T postgres sh -s <<'CONTAINER_SCRIPT'
 set -eu
-export PGPASSWORD="$IDENTITY_DB_PASSWORD"
+
+admin_psql() {
+  PGPASSWORD="$POSTGRES_PASSWORD" psql --no-psqlrc --no-password --host=127.0.0.1 \
+    --username="$POSTGRES_USER" --dbname=identity_db \
+    --set=ON_ERROR_STOP=1 --quiet "$@"
+}
+
+identity_psql() {
+  PGPASSWORD="$IDENTITY_DB_PASSWORD" psql --no-psqlrc --no-password --host=127.0.0.1 \
+    --username="$IDENTITY_DB_USER" --dbname=identity_db \
+    --set=ON_ERROR_STOP=1 --quiet "$@"
+}
 
 access="$(
-  psql --no-psqlrc --no-password --host=127.0.0.1 \
-    --username="$IDENTITY_DB_USER" --dbname=identity_db \
-    --set=ON_ERROR_STOP=1 --tuples-only --no-align --field-separator='|' <<'SQL'
+  identity_psql --tuples-only --no-align --field-separator='|' <<'SQL'
 SELECT
   current_database(),
   current_user,
@@ -47,10 +56,7 @@ echo "PASS Identity role has database connect and schema usage without elevated 
 
 for database in "$POSTGRES_DB" postgres template1 tenant_db project_db billing_db notification_db; do
   exists="$(
-    psql --no-psqlrc --no-password --host=127.0.0.1 \
-      --username="$IDENTITY_DB_USER" --dbname=identity_db \
-      --set=ON_ERROR_STOP=1 --set=database="$database" \
-      --tuples-only --no-align <<'SQL'
+    identity_psql --tuples-only --no-align --set=database="$database" <<'SQL'
 SELECT 1 FROM pg_catalog.pg_database WHERE datname = :'database';
 SQL
   )"
@@ -60,9 +66,7 @@ SQL
     exit 1
   fi
 
-  if psql --no-psqlrc --no-password --host=127.0.0.1 \
-    --username="$IDENTITY_DB_USER" --dbname="$database" \
-    --command='SELECT 1' >/dev/null 2>&1; then
+  if identity_psql --dbname="$database" --command='SELECT 1' >/dev/null 2>&1; then
     echo "FAIL Identity role unexpectedly connected to $database" >&2
     exit 1
   fi
@@ -70,5 +74,84 @@ SQL
   echo "PASS Identity role denied connection to $database"
 done
 
+table_name="__identity_role_smoke_$$"
+
+cleanup() {
+  admin_psql --set=table_name="$table_name" <<'SQL' >/dev/null
+SELECT format('DROP TABLE IF EXISTS identity.%I', :'table_name')
+\gexec
+SQL
+}
+trap cleanup 0
+
+admin_psql --set=table_name="$table_name" <<'SQL'
+SET ROLE identity_owner;
+SELECT format(
+  'CREATE TABLE identity.%I (id BIGSERIAL PRIMARY KEY, value text NOT NULL)',
+  :'table_name'
+)
+\gexec
+RESET ROLE;
+SQL
+
+identity_psql --set=table_name="$table_name" <<'SQL'
+SELECT format(
+  'INSERT INTO identity.%I (value) VALUES (%L)',
+  :'table_name',
+  'before'
+)
+\gexec
+SQL
+
+identity_psql --set=table_name="$table_name" <<'SQL'
+SELECT format(
+  'UPDATE identity.%I SET value = %L WHERE id = 1',
+  :'table_name',
+  'after'
+)
+\gexec
+SQL
+
+selected_value="$(
+  identity_psql --tuples-only --no-align --set=table_name="$table_name" <<'SQL'
+SELECT format('SELECT value FROM identity.%I WHERE id = 1', :'table_name')
+\gexec
+SQL
+)"
+
+if [ "$selected_value" != "after" ]; then
+  echo "FAIL Identity role could not read the row it updated" >&2
+  exit 1
+fi
+
+identity_psql --set=table_name="$table_name" <<'SQL'
+SELECT format('DELETE FROM identity.%I WHERE id = 1', :'table_name')
+\gexec
+SQL
+
+remaining_rows="$(
+  identity_psql --tuples-only --no-align --set=table_name="$table_name" <<'SQL'
+SELECT format('SELECT count(*) FROM identity.%I', :'table_name')
+\gexec
+SQL
+)"
+
+if [ "$remaining_rows" != "0" ]; then
+  echo "FAIL Identity role could not delete its test row" >&2
+  exit 1
+fi
+
+echo "PASS Identity role can insert, update, select, and delete owner-created rows"
+
+if identity_psql --set=table_name="${table_name}_forbidden" <<'SQL' >/dev/null 2>&1
+SELECT format('CREATE TABLE identity.%I (id integer)', :'table_name')
+\gexec
+SQL
+then
+  echo "FAIL Identity role unexpectedly created a table in its schema" >&2
+  exit 1
+fi
+
+echo "PASS Identity role cannot create schema objects"
 echo "PASS Identity role is limited to identity_db"
 CONTAINER_SCRIPT
