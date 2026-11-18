@@ -394,3 +394,91 @@
 - **Next step:** Complete the Identity-owned persistence and validated API adapter for this same
   use case, with disposable-PostgreSQL tests for normalized-email uniqueness and concurrent
   duplicate registration; then verify all three required PR CI jobs on the exact final head.
+
+## 2026-11-18 — Evening quality, documentation, and daily review (20:30 IST)
+
+- **Focus:** Reconcile the test inventory, PostgreSQL role-smoke coverage, roadmap status, and
+  daily review after the morning and midday increments. This slot makes documentation-only
+  changes and does not duplicate the Identity application or database-smoke implementation.
+- **Main branch:** The current main head is
+  [`8f11bce`](https://github.com/Saurabh11Sharma/saas-platform-backend/commit/8f11bcec3f59fe61d6214f853da7e8e87f1affa5).
+  It is the squash merge of PR #8, authored at 09:26:50 IST on 18 November. It is the only
+  main commit dated 18 November; today's new Identity work remains on PR #9. The merge changed
+  `.github/workflows/ci.yml`, `README.md`, `compose.yaml`, `docs/ci-cd.md`,
+  `docs/progress/daily-log.md`, `docs/roadmap.md`,
+  `infra/docker/postgres/init-databases.sh`, and
+  `scripts/ci/smoke-postgres-identity-isolation.sh`.
+- **Main CI:** [Run #67](https://github.com/Saurabh11Sharma/saas-platform-backend/actions/runs/44233909191)
+  completed successfully on exact main SHA
+  `8f11bcec3f59fe61d6214f853da7e8e87f1affa5`. Node 22.12.0, Node 26, and Docker Compose
+  all completed successfully.
+- **Morning slot (08:30 IST):** The recorded run completed. It started at 09:26:00 IST and
+  finished at 09:29:34 IST, approximately 56 minutes after its scheduled start. It verified
+  the previous shared PR #8 and squash-merged it after all three required checks passed on
+  exact PR head `a811c464ec936213812c8d09ba7e7efe18684cd50`; the PR had no submitted reviews,
+  unresolved review threads, or conversation comments, was not a draft, was up to date, and
+  GitHub reported it mergeable. The merge produced main commit `8f11bce`. The same run
+  created PR #9 on `automation/saas-platform-2026-11-18` and authored the inherited-input
+  hardening change. Its commits were [`d258957`](https://github.com/Saurabh11Sharma/saas-platform-backend/commit/d258957244da81e518e5ccf045c8296516364612)
+  (application guard),
+  [`58aa122`](https://github.com/Saurabh11Sharma/saas-platform-backend/commit/58aa1224d6575458a1e10afaf410c9447366c33d)
+  (regression test), and
+  [`edcdf99`](https://github.com/Saurabh11Sharma/saas-platform-backend/commit/edcdf99b8180a55752b80cf39dae7e7b60e6054f)
+  (daily log). Those commits touched `apps/services/identity/src/application/register-identity.ts`,
+  `apps/services/identity/src/application/register-identity.spec.ts`, and
+  `docs/progress/daily-log.md`. One regression test was authored; no local test command ran.
+- **Midday slot (11:30 IST):** The recorded run completed. It started at 12:23:49 IST and
+  finished at 12:29:14 IST, approximately 54 minutes after its scheduled start. It extended
+  the same PR #9 with commit
+  [`4fedde8`](https://github.com/Saurabh11Sharma/saas-platform-backend/commit/4fedde897b7199a5f461d68826cce005e583527e),
+  touching only `scripts/ci/smoke-postgres-identity-isolation.sh`; the PR description was also
+  updated. The script now creates a disposable table as `identity_owner`, exercises INSERT,
+  UPDATE, SELECT, DELETE and BIGSERIAL sequence usage as `identity_app`, checks that the
+  runtime role cannot create schema objects, and removes the fixture. Existing checks still
+  deny access to the seven maintenance/other-service databases. This is real PostgreSQL
+  role/privilege integration coverage, not a repository, migration, or registration test.
+- **PR CI:** [Run #69](https://github.com/Saurabh11Sharma/saas-platform-backend/actions/runs/44255206595)
+  completed successfully on exact code head
+  `4fedde897b7199a5f461d68826cce005e583527e`. Node 22.12.0, Node 26, and Docker Compose
+  all passed. The Node 22.12.0 log reports 20 Identity tests and 3 Gateway tests, all passing;
+  the Node 26 test step also completed successfully. Both Node jobs passed typecheck, build,
+  formatting, high-severity dependency audit (zero vulnerabilities), and process readiness
+  checks for Identity, Tenant, Project, Billing, and the Gateway. The Docker job built and
+  started the Compose stack, passed all database/schema privilege checks, denied connections
+  to `platform_admin`, `postgres`, `template1`, `tenant_db`, `project_db`, `billing_db`, and
+  `notification_db`, passed INSERT/UPDATE/SELECT/DELETE and schema-creation-denial checks,
+  passed all five container readiness checks and Gateway aggregate health, then cleaned up
+  its containers and temporary volumes.
+- **Evening quality work:** This slot updates `README.md`, `docs/ci-cd.md`, `docs/roadmap.md`,
+  and this log. The README and CI guide now describe the 23-test suite (20 Identity, 3 Gateway)
+  and the exact DML/DDL scope of the PostgreSQL role smoke. The roadmap now records the
+  role-isolation boundary as implemented on main and identifies the additional DML/DDL
+  assertions as PR #9 work. PostgreSQL persistence remains planned. No tests were authored
+  or executed locally; this GitHub-only environment has no repository shell, npm runtime, or
+  Docker CLI. Run #69 validates the code head before this documentation-only commit; the
+  final documentation head must be checked against its own Actions run.
+- **Shared PR status before this documentation update:** PR #9 was open and not a draft,
+  reported mergeable, 4 commits ahead and 0 behind main, with no submitted reviews, review
+  threads, or conversation comments. This evening slot does not merge it. The documentation
+  update is a single commit on the same branch; its exact head and CI result are recorded in
+  the task report.
+- **Architecture and quality assessment:** The Identity domain/application boundary remains
+  framework-independent, and the runtime database role is restricted to the Identity database.
+  No cross-service database access was introduced. However, no backend service process connects
+  to PostgreSQL; there is still no Identity driver, migration, repository adapter, concrete
+  adaptive password hasher, registration HTTP endpoint, or real repository/persistence test.
+  Tenant authorization/isolation, RabbitMQ application integration, Web/Notification/Audit
+  implementations, OpenTelemetry, and AWS deployment remain incomplete. Process readiness
+  does not prove dependency connectivity.
+- **Container boundary:** CI verified the five runnable application containers and PostgreSQL,
+  MongoDB, Redis, and RabbitMQ. Web, Notification, and Audit are not runnable Compose services.
+  The backend processes do not yet connect to the database or broker; the PostgreSQL smoke
+  verifies role permissions and disposable-fixture DML only.
+- **Blockers:** No local shell/npm/Docker execution was available. Identity registration is not
+  a persisted or HTTP-accessible flow. No real repository integration test or migration exists.
+- **Highest-value next action:** Complete the first production-shaped Identity registration
+  vertical slice: generate the PostgreSQL driver/lockfile in an npm-capable environment, add an
+  explicit Identity-owned migration and atomic repository adapter, implement vetted adaptive
+  password hashing and a validated HTTP boundary, then execute disposable-PostgreSQL integration
+  tests including concurrent normalized-email uniqueness in CI. Do not mark registration complete
+  until those behaviors and failure cases are verified.
