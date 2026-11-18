@@ -459,7 +459,7 @@
   final documentation head must be checked against its own Actions run.
 - **Shared PR status after the initial documentation update:** PR #9 remained open and not a
   draft, 5 commits ahead and 0 behind main. GitHub reported it mergeable, but the required
-  checks were not green because run #70 failed the two Node formatting steps. There were no
+  checks were not green because run #71 failed the two Node formatting steps. There were no
   submitted reviews, review threads, or conversation comments. This evening slot does not
   merge it. The formatting correction and daily-log update are a follow-up commit on the same
   branch.
@@ -468,8 +468,16 @@
   Node 22.12.0 and Node 26 passed installation, typecheck, build, and their test steps, then
   failed `npm run format:check`; the logs identify only `README.md`. Docker Compose completed
   successfully. The cause was an overlong testing-table cell that changed Prettier's alignment.
-  The follow-up shortens that cell to fit the existing table width and records the failure; no
-  quality gate is weakened. A new exact-head CI run is required before merge.
+  The first follow-up shortened the cell but still did not satisfy Prettier's table alignment.
+  The next correction restores the previously formatted row; the detailed role-smoke scope
+  remains in the README paragraph. No quality gate is weakened.
+- **Formatting follow-up:** [Run #71](https://github.com/Saurabh11Sharma/saas-platform-backend/actions/runs/44332114305)
+  ran on exact head `063a7c8d1a47d07d53b56603a8f94770f3f2db5b` and completed with failure.
+  Both Node jobs again failed only at `npm run format:check`, with `README.md` identified; their
+  install, typecheck, build, and test steps passed. Docker Compose completed successfully.
+  The attempted shorter table cell still changed Prettier's expected table layout. This
+  correction restores the original formatted table row while retaining the expanded test and
+  PostgreSQL smoke details in the surrounding README prose. A fresh exact-head CI run is needed.
 - **Architecture and quality assessment:** The Identity domain/application boundary remains
   framework-independent, and the runtime database role is restricted to the Identity database.
   No cross-service database access was introduced. However, no backend service process connects
