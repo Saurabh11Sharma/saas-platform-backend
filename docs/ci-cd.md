@@ -21,7 +21,7 @@ The configured tests use Node.js's built-in `node:test` runner through `tsx --te
 
 ### Docker Compose build and runtime
 
-The `container-smoke` job validates `compose.yaml`, builds the current application images from `infra/docker/node-service.Dockerfile`, and starts the full local stack with Docker Compose. Compose waits for PostgreSQL, MongoDB, Redis, RabbitMQ, the four backend services, and the Gateway to become healthy. The `smoke:compose` script then verifies all five application readiness endpoints and confirms that the Gateway sees all four implemented downstream services as healthy without exposing internal URLs. CI collects logs on failure and tears down containers and temporary volumes afterward.
+The `container-smoke` job validates `compose.yaml`, builds the current application images from `infra/docker/node-service.Dockerfile`, and starts the full local stack with Docker Compose. Compose waits for PostgreSQL, MongoDB, Redis, RabbitMQ, the four backend services, and the Gateway to become healthy. Before application readiness checks, CI runs `bash scripts/ci/smoke-postgres-identity-isolation.sh` against the live PostgreSQL container. The script connects as the Identity runtime role, verifies CONNECT to `identity_db`, schema USAGE without CREATE, and absence of elevated role attributes, then verifies that the role is denied connections to the maintenance and other initialized service databases. The `npm run smoke:compose` script then verifies all five application readiness endpoints and confirms that the Gateway sees all four implemented downstream services as healthy without exposing internal URLs. CI collects logs on failure and tears down containers and temporary volumes afterward.
 
 The shared Dockerfile produces a separate image per service using build arguments. It builds with the committed lockfile, prunes development dependencies, copies only the selected compiled application into the runtime image, runs as the non-root `node` user, and defines a readiness health check.
 
@@ -29,7 +29,7 @@ The shared Dockerfile produces a separate image per service using build argument
 
 The runnable workspaces currently include the Gateway and four backend services. The planned Web, Notification, and Audit applications do not yet have runnable package manifests and are not represented as built or healthy containers. The gateway reports a degraded platform while Notification and Audit are absent.
 
-Compose currently verifies that the database and broker containers start and become healthy, but the backend services do not yet establish persistence or RabbitMQ connections. The Identity workspace has no PostgreSQL driver, migration, or repository adapter, and its PasswordHasher port has no concrete implementation. The registration use case is therefore not yet a working HTTP or persisted account-creation flow. This is not yet a database integration, messaging integration, Testcontainers, contract, browser end-to-end, or load test.
+Compose verifies that the database and broker containers start and become healthy, and the Docker CI job now runs a real PostgreSQL role-isolation smoke against the disposable Compose database. That smoke proves database and schema access boundaries only; it does not execute migrations or repository operations. Backend services still do not establish persistence or RabbitMQ connections. The Identity workspace has no PostgreSQL driver, migration, or repository adapter, and its PasswordHasher port has no concrete implementation. The registration use case is therefore not yet a working HTTP or persisted account-creation flow. PostgreSQL repository integration, messaging integration, Testcontainers, contract, browser end-to-end, and load tests are not currently wired into CI.
 
 ## Run locally
 
@@ -46,6 +46,7 @@ npm run smoke:services
 
 docker compose config --quiet
 docker compose up -d --build --wait --wait-timeout 240
+bash scripts/ci/smoke-postgres-identity-isolation.sh
 npm run smoke:compose
 docker compose ps
 ```
