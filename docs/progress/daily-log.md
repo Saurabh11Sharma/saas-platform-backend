@@ -350,3 +350,47 @@
 - **Evening CI diagnosis:** [PR CI run #65](https://github.com/Saurabh11Sharma/saas-platform-backend/actions/runs/44111304463) ran on exact documentation head `3c5fee0a092bb076af964ec4f53dff8bb55933a3`. Both Node jobs completed typecheck, build, and all 22 existing unit tests successfully, then failed at `npm run format:check` because this daily log had an extra blank line before the evening section. Docker Compose completed successfully. The redundant blank line is removed in this follow-up commit; run #65 remains failed and does not validate the corrected head.
 - **Blockers:** Local commands were not executable in this GitHub-only environment. The Identity persistence slice remains incomplete. This formatting-only correction requires a fresh three-job run on its exact head.
 - **Highest-value next action:** Complete the first Identity-owned PostgreSQL persistence slice under the new role model, with an explicit repeatable migration, an atomic repository adapter enforcing normalized-email uniqueness, and disposable-PostgreSQL integration tests (including concurrent duplicate registration) executed in CI. Do not mark registration complete until the validated API boundary and vetted password hasher are also implemented and verified.
+
+## 2026-11-18 — Morning feature increment (08:30 IST)
+
+- **Focus:** Harden the existing Identity registration command boundary against inherited or
+  custom-prototype input without changing registration policy or persistence behavior.
+- **Change:** `RegisterIdentity.execute` now accepts only plain records (ordinary or null
+  prototype) and reads the password only from an own property. Custom-prototype objects are
+  rejected before hashing or repository access, preventing an inherited password from being
+  treated as a caller-supplied credential. Domain/application code remains framework-independent.
+- **Files changed:** `apps/services/identity/src/application/register-identity.ts`,
+  `apps/services/identity/src/application/register-identity.spec.ts`, and this daily log.
+- **Code commit:** [`58aa122`](https://github.com/Saurabh11Sharma/saas-platform-backend/commit/58aa1224d6575458a1e10afaf410c9447366c33d).
+  One focused regression test covers an email supplied as an own property with a password
+  inherited from a custom prototype; neither outbound dependency is invoked.
+- **Test inventory:** The Identity suite now contains 20 unit tests (23 total with 3 Gateway
+  tests). Tests were authored but not executed locally because this GitHub-only environment
+  provides no repository shell or npm runtime. Run
+  `npm test --workspace=@saas/identity-service` locally or in CI.
+- **CI baseline:** Main commit
+  [`8f11bce`](https://github.com/Saurabh11Sharma/saas-platform-backend/commit/8f11bcec3f59fe61d6214f853da7e8e87f1affa5)
+  is the squash merge of PR #8. Main Actions run
+  [#44233909191](https://github.com/Saurabh11Sharma/saas-platform-backend/actions/runs/44233909191)
+  was in progress on that exact SHA when this entry was prepared. It is baseline evidence only
+  and does not validate this branch's new test. PR CI will be required after the shared PR opens.
+- **Midday handoff:** Continue the same `RegisterIdentity` use case. `EmailAddress` must remain
+  normalized; the `Identity` aggregate is reconstituted with its ID, normalized email,
+  `PasswordHash`, and creation timestamp; hashes must not appear in the use-case result or logs.
+  Implement `IdentityRepository.create(NewIdentity): Promise<Identity>` as one atomic insert in
+  the Identity-owned `identity_db`. Enforce uniqueness on normalized email in PostgreSQL and
+  translate only that matching constraint violation to
+  `IdentityEmailAlreadyRegisteredError`; do not use a read-before-write check. The insert is one
+  local transaction; any future outbox record must share it. Migrations must create objects as
+  `identity_owner`; the `identity_app` runtime role must remain confined to `identity_db`.
+  The HTTP boundary must accept a plain JSON object, require own `email` / `password` fields,
+  reject unknown fields (especially client-supplied `role` or `tenantId`), and map domain errors
+  without leaking credentials. Add a vetted adaptive `PasswordHasher` with unique salts and a
+  versioned encoded format. No tenant authorization context is established by registration.
+- **Blockers / unverified:** No concrete password hasher, Identity migration/repository adapter,
+  registration HTTP endpoint, or real PostgreSQL registration integration test exists. No local
+  command was run. Main CI was still in progress; PR CI had not yet been triggered when this
+  record was written. This boundary hardening does not complete registration or authentication.
+- **Next step:** Complete the Identity-owned persistence and validated API adapter for this same
+  use case, with disposable-PostgreSQL tests for normalized-email uniqueness and concurrent
+  duplicate registration; then verify all three required PR CI jobs on the exact final head.
