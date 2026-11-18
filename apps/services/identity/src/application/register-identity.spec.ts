@@ -77,6 +77,19 @@ describe('RegisterIdentity', () => {
     assert.equal(created.length, 0);
   });
 
+  it('rejects objects with custom prototypes before invoking dependencies', async () => {
+    const { useCase, created, hashedPasswords } = createHarness();
+    const command = Object.assign(
+      Object.create({ password: 'a-test-password' }) as Record<string, unknown>,
+      { email: 'ada@example.com' },
+    );
+
+    await assert.rejects(useCase.execute(command), InvalidRegistrationRequestError);
+
+    assert.equal(hashedPasswords.length, 0);
+    assert.equal(created.length, 0);
+  });
+
   it('rejects unexpected fields before invoking dependencies', async () => {
     const { useCase, created, hashedPasswords } = createHarness();
 
