@@ -43,10 +43,7 @@ function getRegistrationFields(value: unknown): RegistrationFields | null {
   }
 
   const keys = Reflect.ownKeys(value);
-  if (
-    !keys.includes('email') ||
-    !keys.every((key) => key === 'email' || key === 'password')
-  ) {
+  if (!keys.includes('email') || !keys.every((key) => key === 'email' || key === 'password')) {
     return null;
   }
 
