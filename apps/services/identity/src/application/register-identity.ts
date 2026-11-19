@@ -23,7 +23,13 @@ export interface RegisterIdentityResult {
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+    return false;
+  }
+
+  const prototype = Object.getPrototypeOf(value);
+
+  return prototype === Object.prototype || prototype === null;
 }
 
 function hasSupportedRegistrationFields(command: Record<string, unknown>): boolean {
@@ -51,7 +57,9 @@ export class RegisterIdentity {
     }
 
     const email = EmailAddress.create(command.email);
-    const password = command.password;
+    const password = Object.prototype.hasOwnProperty.call(command, 'password')
+      ? command.password
+      : undefined;
 
     if (typeof password !== 'string' || password.length === 0) {
       throw new InvalidRegistrationPasswordError();
