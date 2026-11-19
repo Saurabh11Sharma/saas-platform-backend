@@ -561,4 +561,3 @@
   adapter, validated registration HTTP endpoint, or real PostgreSQL registration integration test
   exists yet. The new regression test and TypeScript/format checks await exact-head PR CI; no
   persistence or registration completion is claimed.
-
