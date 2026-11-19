@@ -523,13 +523,42 @@
 
 ## 2026-11-19 — Morning feature increment (08:30 IST)
 
-- **Focus:** Harden the framework-independent Identity registration boundary against accessor-backed input.
-- **Change:** `RegisterIdentity` now reads `email` and optional `password` only from own, enumerable data properties. Accessor-backed fields are rejected with `InvalidRegistrationRequestError` without executing caller-provided getters or invoking either outbound dependency. Missing/empty passwords retain the existing `InvalidRegistrationPasswordError`; email normalization and repository-owned duplicate-email handling are unchanged.
-- **Files changed:** `apps/services/identity/src/application/register-identity.ts`, `apps/services/identity/src/application/register-identity.spec.ts`, and this log.
-- **Code commit:** [`5881176`](https://github.com/Saurabh11Sharma/saas-platform-backend/commit/58811769eba906bee7e7e8a1377c5325a1d9a245). One focused regression test covers accessor-backed email and password fields, asserts that neither getter executes, and verifies that hashing and persistence are not invoked.
-- **Validation:** Tests were added but not executed locally; this GitHub-only execution has no repository shell, npm runtime, or Docker CLI. Required CI commands are `npm test --workspace=@saas/identity-service`, `npm run typecheck`, `npm run build`, `npm run format:check`, `npm audit --audit-level=high`, and the configured service/Compose smoke checks. Final PR CI must be checked against the exact final branch head.
-- **Midday handoff — same use case:** Continue `RegisterIdentity`. The application normalizes input through `EmailAddress`, hashes through `PasswordHasher`, calls `IdentityRepository.create(NewIdentity): Promise<Identity>`, and returns only ID, normalized email, and creation timestamp. The adapter must return/reconstitute the `Identity` aggregate with its ID, normalized `EmailAddress`, `PasswordHash`, and creation timestamp; never return or log plaintext passwords or encoded hashes.
-- **Repository contract and invariants:** Implement one atomic insert in the Identity-owned `identity_db`. Enforce uniqueness on normalized email with a database unique constraint and translate only that specific violation to `IdentityEmailAlreadyRegisteredError`; do not use a read-before-write check. The identity insert is one local transaction. If an outbox record is later justified, it must commit in that same transaction; no outbox is required for this increment.
-- **Ownership and authorization:** Migrations must create objects as `identity_owner`; the `identity_app` runtime role performs application DML only and remains confined to `identity_db`. No other service may access this database. Registration establishes no tenant context and must continue rejecting client-supplied role/tenant fields.
-- **Blockers / unverified:** No concrete adaptive `PasswordHasher`, Identity migration/repository adapter, validated registration HTTP endpoint, or real PostgreSQL registration integration test exists yet. The new regression test and TypeScript/format checks await exact-head PR CI; no persistence or registration completion is claimed.
+- **Focus:** Harden the framework-independent Identity registration boundary against accessor-backed
+  input.
+- **Change:** `RegisterIdentity` now reads `email` and optional `password` only from own,
+  enumerable data properties. Accessor-backed fields are rejected with
+  `InvalidRegistrationRequestError` without executing caller-provided getters or invoking either
+  outbound dependency. Missing/empty passwords retain the existing
+  `InvalidRegistrationPasswordError`; email normalization and repository-owned duplicate-email
+  handling are unchanged.
+- **Files changed:** `apps/services/identity/src/application/register-identity.ts`,
+  `apps/services/identity/src/application/register-identity.spec.ts`, and this log.
+- **Code commit:** [`5881176`](https://github.com/Saurabh11Sharma/saas-platform-backend/commit/58811769eba906bee7e7e8a1377c5325a1d9a245).
+  One focused regression test covers accessor-backed email and password fields, asserts that neither
+  getter executes, and verifies that hashing and persistence are not invoked.
+- **Validation:** Tests were added but not executed locally; this GitHub-only execution has no
+  repository shell, npm runtime, or Docker CLI. Required CI commands are
+  `npm test --workspace=@saas/identity-service`, `npm run typecheck`, `npm run build`,
+  `npm run format:check`, `npm audit --audit-level=high`, and the configured service/Compose
+  smoke checks. Final PR CI must be checked against the exact final branch head.
+- **Midday handoff — same use case:** Continue `RegisterIdentity`. The application normalizes input
+  through `EmailAddress`, hashes through `PasswordHasher`, calls
+  `IdentityRepository.create(NewIdentity): Promise<Identity>`, and returns only ID, normalized
+  email, and creation timestamp. The adapter must return/reconstitute the `Identity` aggregate
+  with its ID, normalized `EmailAddress`, `PasswordHash`, and creation timestamp; never return or
+  log plaintext passwords or encoded hashes.
+- **Repository contract and invariants:** Implement one atomic insert in the Identity-owned
+  `identity_db`. Enforce uniqueness on normalized email with a database unique constraint and
+  translate only that specific violation to `IdentityEmailAlreadyRegisteredError`; do not use a
+  read-before-write check. The identity insert is one local transaction. If an outbox record is
+  later justified, it must commit in that same transaction; no outbox is required for this
+  increment.
+- **Ownership and authorization:** Migrations must create objects as `identity_owner`; the
+  `identity_app` runtime role performs application DML only and remains confined to
+  `identity_db`. No other service may access this database. Registration establishes no tenant
+  context and must continue rejecting client-supplied role/tenant fields.
+- **Blockers / unverified:** No concrete adaptive `PasswordHasher`, Identity migration/repository
+  adapter, validated registration HTTP endpoint, or real PostgreSQL registration integration test
+  exists yet. The new regression test and TypeScript/format checks await exact-head PR CI; no
+  persistence or registration completion is claimed.
 
