@@ -90,6 +90,38 @@ describe('RegisterIdentity', () => {
     assert.equal(created.length, 0);
   });
 
+  it('rejects accessor-backed fields without invoking getters or dependencies', async () => {
+    const { useCase, created, hashedPasswords } = createHarness();
+    let getterCalls = 0;
+
+    const emailAccessor = Object.defineProperty({}, 'email', {
+      enumerable: true,
+      get() {
+        getterCalls += 1;
+        return 'ada@example.com';
+      },
+    });
+    const passwordAccessor = Object.defineProperties(
+      { email: 'ada@example.com' },
+      {
+        password: {
+          enumerable: true,
+          get() {
+            getterCalls += 1;
+            return 'a-test-password';
+          },
+        },
+      },
+    );
+
+    await assert.rejects(useCase.execute(emailAccessor), InvalidRegistrationRequestError);
+    await assert.rejects(useCase.execute(passwordAccessor), InvalidRegistrationRequestError);
+
+    assert.equal(getterCalls, 0);
+    assert.equal(hashedPasswords.length, 0);
+    assert.equal(created.length, 0);
+  });
+
   it('rejects unexpected fields before invoking dependencies', async () => {
     const { useCase, created, hashedPasswords } = createHarness();
 

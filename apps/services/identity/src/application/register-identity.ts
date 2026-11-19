@@ -22,6 +22,11 @@ export interface RegisterIdentityResult {
   readonly createdAt: string;
 }
 
+interface RegistrationFields {
+  readonly email: unknown;
+  readonly password: unknown;
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) {
     return false;
@@ -32,10 +37,34 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return prototype === Object.prototype || prototype === null;
 }
 
-function hasSupportedRegistrationFields(command: Record<string, unknown>): boolean {
-  const keys = Reflect.ownKeys(command);
+function getRegistrationFields(value: unknown): RegistrationFields | null {
+  if (!isRecord(value)) {
+    return null;
+  }
 
-  return keys.includes('email') && keys.every((key) => key === 'email' || key === 'password');
+  const keys = Reflect.ownKeys(value);
+  if (
+    !keys.includes('email') ||
+    !keys.every((key) => key === 'email' || key === 'password')
+  ) {
+    return null;
+  }
+
+  const email = Object.getOwnPropertyDescriptor(value, 'email');
+  const password = Object.getOwnPropertyDescriptor(value, 'password');
+
+  if (email === undefined || !('value' in email) || !email.enumerable) {
+    return null;
+  }
+
+  if (password !== undefined && (!('value' in password) || !password.enumerable)) {
+    return null;
+  }
+
+  return {
+    email: email.value,
+    password: password?.value,
+  };
 }
 
 /**
@@ -52,14 +81,13 @@ export class RegisterIdentity {
   ) {}
 
   async execute(command: unknown): Promise<RegisterIdentityResult> {
-    if (!isRecord(command) || !hasSupportedRegistrationFields(command)) {
+    const fields = getRegistrationFields(command);
+    if (fields === null) {
       throw new InvalidRegistrationRequestError();
     }
 
-    const email = EmailAddress.create(command.email);
-    const password = Object.prototype.hasOwnProperty.call(command, 'password')
-      ? command.password
-      : undefined;
+    const email = EmailAddress.create(fields.email);
+    const password = fields.password;
 
     if (typeof password !== 'string' || password.length === 0) {
       throw new InvalidRegistrationPasswordError();
