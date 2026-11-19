@@ -536,11 +536,15 @@
 - **Code commit:** [`5881176`](https://github.com/Saurabh11Sharma/saas-platform-backend/commit/58811769eba906bee7e7e8a1377c5325a1d9a245).
   One focused regression test covers accessor-backed email and password fields, asserts that neither
   getter executes, and verifies that hashing and persistence are not invoked.
-- **Validation:** Tests were added but not executed locally; this GitHub-only execution has no
-  repository shell, npm runtime, or Docker CLI. Required CI commands are
-  `npm test --workspace=@saas/identity-service`, `npm run typecheck`, `npm run build`,
-  `npm run format:check`, `npm audit --audit-level=high`, and the configured service/Compose
-  smoke checks. Final PR CI must be checked against the exact final branch head.
+- **Validation:** No local npm, TypeScript, Prettier, or Docker commands were run; this execution
+  has GitHub repository access but no repository shell/runtime. [PR CI run #77](https://github.com/Saurabh11Sharma/saas-platform-backend/actions/runs/44450785958)
+  completed successfully on implementation head
+  `b78741ce90d044d23f4adc3aa00e0127fd83bbd7`. Node 22.12.0 and Node 26 each passed typecheck,
+  build, all 21 Identity and 3 Gateway tests, Prettier, high-severity dependency audit (zero
+  vulnerabilities), and process readiness/aggregate-health smoke. Docker Compose built and
+  started the stack, passed Identity database-role isolation and DML/DDL checks, and passed all
+  five application readiness checks plus Gateway aggregate health. This log-only follow-up
+  requires a fresh exact-head PR CI run before merge.
 - **Midday handoff — same use case:** Continue `RegisterIdentity`. The application normalizes input
   through `EmailAddress`, hashes through `PasswordHasher`, calls
   `IdentityRepository.create(NewIdentity): Promise<Identity>`, and returns only ID, normalized
@@ -559,5 +563,4 @@
   context and must continue rejecting client-supplied role/tenant fields.
 - **Blockers / unverified:** No concrete adaptive `PasswordHasher`, Identity migration/repository
   adapter, validated registration HTTP endpoint, or real PostgreSQL registration integration test
-  exists yet. The new regression test and TypeScript/format checks await exact-head PR CI; no
-  persistence or registration completion is claimed.
+  exists yet. No persistence or registration completion is claimed.
