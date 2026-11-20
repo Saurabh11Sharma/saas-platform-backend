@@ -749,7 +749,6 @@
   transport, persistence, and integration boundaries are implemented and
   verified.
 
-
 ## 2026-11-20 — Morning CI formatting follow-up
 
 - **Previous shared PR disposition:** PR #10 was created/updated on 2026-11-19,
@@ -788,3 +787,19 @@
   `25aa7f16a70815a4dd174c966200f135bae876f7`, zero commits behind at this
   check. It was created today and is not eligible for the next-day unreviewed
   merge policy during this run.
+
+## 2026-11-20 — Daily-log formatting correction
+
+- **Diagnosis:** PR run #44668932858 completed with failure on exact head
+  `a8c2b331b3775165e0bfb7b6dff7382eee5e083a`. Both Node jobs passed locked
+  installation, typecheck, build, and all configured tests, then failed only
+  at Prettier on `docs/progress/daily-log.md`. Docker Compose passed stack
+  build/runtime, Identity PostgreSQL role isolation, readiness/Gateway smoke,
+  and cleanup.
+- **Change:** Removed the extra blank line before the preceding CI follow-up
+  heading. No product code changed. The extra spacing was introduced by the
+  prior daily-log update commit `a8c2b331b3775165e0bfb7b6dff7382eee5e083a`.
+- **Files changed:** `docs/progress/daily-log.md` only.
+- **Validation:** No local Prettier command was available. Run #446689 is the
+  exact-head evidence above; the corrected log creates a new PR head and needs
+  its own Actions run before the PR can be considered green.
