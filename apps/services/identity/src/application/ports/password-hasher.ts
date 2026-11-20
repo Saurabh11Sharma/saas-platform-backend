@@ -3,8 +3,10 @@ import { PasswordHash } from '../../domain/password-hash';
 /**
  * Outbound password-hashing port.
  *
- * Implementations must use a vetted adaptive password-hashing algorithm with a
- * unique salt per password and a versioned encoded representation. Plaintext
+ * RegisterIdentity supplies an NFC-normalized password. Implementations must
+ * hash the complete input without truncation, use a vetted adaptive algorithm,
+ * and encode a unique salt and algorithm/version parameters with the hash.
+ * Authentication verification must apply the same NFC normalization. Plaintext
  * passwords and encoded hashes must never be logged.
  */
 export interface PasswordHasher {

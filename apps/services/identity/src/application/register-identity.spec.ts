@@ -68,6 +68,34 @@ describe('RegisterIdentity', () => {
     assert.equal('passwordHash' in result, false);
   });
 
+  it('rejects passwords outside the 15-to-128 Unicode code point range before dependencies', async () => {
+    const { useCase, created, hashedPasswords } = createHarness();
+
+    await assert.rejects(
+      useCase.execute({ email: 'ada@example.com', password: '😀'.repeat(14) }),
+      InvalidRegistrationPasswordError,
+    );
+    await assert.rejects(
+      useCase.execute({ email: 'ada@example.com', password: 'a'.repeat(129) }),
+      InvalidRegistrationPasswordError,
+    );
+
+    assert.equal(hashedPasswords.length, 0);
+    assert.equal(created.length, 0);
+  });
+
+  it('normalizes passwords to NFC before hashing', async () => {
+    const { useCase, created, hashedPasswords } = createHarness();
+
+    await useCase.execute({
+      email: 'ada@example.com',
+      password: 'e\u0301'.repeat(15),
+    });
+
+    assert.deepEqual(hashedPasswords, ['é'.repeat(15)]);
+    assert.equal(created.length, 1);
+  });
+
   it('rejects a non-object request before invoking dependencies', async () => {
     const { useCase, created, hashedPasswords } = createHarness();
 
