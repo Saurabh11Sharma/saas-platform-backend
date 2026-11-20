@@ -674,70 +674,77 @@
   PostgreSQL integration tests executed in CI. Keep database access inside
   Identity and do not mark registration complete until those boundaries pass.
 
-
 ## 2026-11-20 — Morning feature increment (08:30 IST)
 
-- **Focus:** Define and enforce a bounded password policy in the framework-independent
-  Identity registration use case before hashing or persistence.
-- **Implemented:** `RegisterIdentity` now accepts passwords only when they contain 15–128 Unicode
-  code points after NFC normalization. It counts surrogate pairs as one code point,
-  rejects non-string, short, and overlong values before invoking either outbound port,
-  preserves whitespace, and never trims or truncates the submitted secret. The
-  `PasswordHasher` port now documents the NFC input contract and requires future
-  verification to apply the same normalization. The 15-character single-factor
-  minimum, Unicode handling, no-composition-rule approach, full-input handling,
-  and NFC guidance follow NIST SP 800-63B-4 (July 2025):
+- **Focus:** Define and enforce a bounded password policy in the
+  framework-independent Identity registration use case before hashing or
+  persistence.
+- **Implemented:** `RegisterIdentity` now accepts passwords only when they
+  contain 15–128 Unicode code points after NFC normalization. It counts
+  surrogate pairs as one code point, rejects non-string, short, and overlong
+  values before invoking either outbound port, preserves whitespace, and
+  never trims or truncates the submitted secret. The `PasswordHasher` port
+  now documents the NFC input contract and requires future verification to
+  apply the same normalization. The 15-character single-factor minimum,
+  Unicode handling, no-composition-rule approach, full-input handling, and
+  NFC guidance follow NIST SP 800-63B-4 (July 2025):
   https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-63b-4.pdf.
-  The 128-code-point maximum is this project's bounded-input choice and exceeds
-  NIST's recommended support for at least 64 characters.
+  The 128-code-point maximum is this project's bounded-input choice and
+  exceeds NIST's recommended support for at least 64 characters.
 - **Files changed:**
   - `apps/services/identity/src/application/register-identity.ts`
   - `apps/services/identity/src/application/register-identity.spec.ts`
   - `apps/services/identity/src/application/ports/password-hasher.ts`
   - `docs/progress/daily-log.md` (this entry)
 - **Code commits:**
-  - [`b98c5b3`](https://github.com/Saurabh11Sharma/saas-platform-backend/commit/b98c5b3dc067aa09de51075bf3c5165bd92cc270) —
-    add the password policy and document the hashing-port normalization contract.
-  - [`618633e`](https://github.com/Saurabh11Sharma/saas-platform-backend/commit/618633e4b5bd6e633cde97e6b5ba9cc2e23a8134) —
-    add boundary coverage for short, overlong, and maximum-length passwords.
-  - [`da4aeef`](https://github.com/Saurabh11Sharma/saas-platform-backend/commit/da4aeefdadc46cd489fb33e92cdb080d1c974de3) —
-    clarify code-point counting and reject non-string passwords.
+  - `b98c5b3dc067aa09de51075bf3c5165bd92cc270` — add the password policy and
+    document the hashing-port normalization contract.
+  - `618633e4b5bd6e633cde97e6b5ba9cc2e23a8134` — add boundary coverage for
+    short, overlong, and maximum-length passwords.
+  - `da4aeefdadc46cd489fb33e92cdb080d1c974de3` — clarify code-point counting
+    and reject non-string passwords.
 - **Tests added:** Three focused `RegisterIdentity` tests cover the lower/upper
   boundaries and type rejection, acceptance at the 128-code-point maximum, and
   NFC normalization before hashing. They also assert invalid passwords do not
   invoke hashing or persistence.
-- **Validation:** No local commands were run; this execution has GitHub repository
-  access but no checked-out repository shell, npm runtime, or Docker CLI. Tests
-  were authored but not executed locally. Run `npm run test --workspace=@saas/identity-service`
-  for the focused suite, followed by `npm run typecheck`, `npm run build`,
-  `npm test`, `npm run format:check`, `npm audit --audit-level=high`,
-  and `npm run smoke:services`. Main CI [run #44667684472](https://github.com/Saurabh11Sharma/saas-platform-backend/actions/runs/44667684472)
-  passed all three jobs on exact merged-main SHA
-  `25aa7f16a70815a4dd174c966200f135bae876f7`; this is baseline evidence only,
-  not validation of this feature. PR CI had not started when this entry was written.
-- **Midday handoff — same `RegisterIdentity` use case:** Keep the domain/application
-  code independent of NestJS and infrastructure. The repository port remains
-  `IdentityRepository.create(NewIdentity): Promise<Identity>` and must perform one
-  atomic insert into the Identity-owned `identity_db`. Reconstitute the aggregate
-  with its generated ID, normalized `EmailAddress`, `PasswordHash`, and creation
-  timestamp. Enforce uniqueness on normalized email with a database constraint;
-  translate only that specific violation to `IdentityEmailAlreadyRegisteredError`;
-  do not use a read-before-write check. The insert is one local transaction. If an
-  outbox becomes justified, write it in the same transaction; no distributed
-  transaction is needed for registration.
-- **Hashing contract:** `PasswordHasher.hash` receives the NFC-normalized full password.
-  Implement a vetted adaptive algorithm with a unique salt and versioned algorithm/
-  work-factor metadata. Never truncate, persist, return, or log plaintext passwords
-  or encoded hashes. Future password verification must use the same NFC normalization.
-- **Ownership and authorization:** Only Identity may access `identity_db`; migrations
-  must create objects as `identity_owner` and the `identity_app` runtime role
-  remains limited to application DML. Registration has no tenant context and must
-  continue rejecting client-supplied role/tenant fields.
+- **Validation:** No local commands were run: this execution has GitHub
+  repository access but no checked-out repository shell, npm runtime, or
+  Docker CLI. Tests were authored but not executed locally. Run
+  `npm run test --workspace=@saas/identity-service` for the focused suite,
+  followed by `npm run typecheck`, `npm run build`, `npm test`,
+  `npm run format:check`, `npm audit --audit-level=high`, and
+  `npm run smoke:services`. Main CI run `44667684472` passed all three jobs
+  on exact merged-main SHA `25aa7f16a70815a4dd174c966200f135bae876f7`;
+  this is baseline evidence only, not validation of this feature. PR CI had
+  not started when this entry was written.
+- **Midday handoff — same `RegisterIdentity` use case:** Keep the
+  domain/application code independent of NestJS and infrastructure. The
+  repository port remains
+  `IdentityRepository.create(NewIdentity): Promise<Identity>` and must perform
+  one atomic insert into the Identity-owned `identity_db`. Reconstitute the
+  aggregate with its generated ID, normalized `EmailAddress`,
+  `PasswordHash`, and creation timestamp. Enforce uniqueness on normalized
+  email with a database constraint; translate only that specific violation to
+  `IdentityEmailAlreadyRegisteredError`; do not use a read-before-write check.
+  The insert is one local transaction. If an outbox becomes justified, write
+  it in the same transaction; no distributed transaction is needed for
+  registration.
+- **Hashing contract:** `PasswordHasher.hash` receives the NFC-normalized
+  full password. Implement a vetted adaptive algorithm with a unique salt and
+  versioned algorithm/work-factor metadata. Never truncate, persist, return,
+  or log plaintext passwords or encoded hashes. Future password verification
+  must use the same NFC normalization.
+- **Ownership and authorization:** Only Identity may access `identity_db`;
+  migrations must create objects as `identity_owner` and the
+  `identity_app` runtime role remains limited to application DML. Registration
+  has no tenant context and must continue rejecting client-supplied role/tenant
+  fields.
 - **Blockers / unverified:** No adaptive hasher, compromised/common-password
-  blocklist, authentication rate limiter, Identity migration/repository adapter,
-  validated registration HTTP endpoint, request-body size limit, or real
-  PostgreSQL repository integration tests exist. NIST SP 800-63B-4 also requires
-  blocklist comparison and effective rate limiting for password verification;
-  those controls remain outstanding. Do not expose registration publicly or
-  mark the registration flow complete until the hashing, blocklist, transport,
-  persistence, and integration boundaries are implemented and verified.
+  blocklist, authentication rate limiter, Identity migration/repository
+  adapter, validated registration HTTP endpoint, request-body size limit, or
+  real PostgreSQL repository integration tests exist. NIST SP 800-63B-4 also
+  requires blocklist comparison and effective rate limiting for password
+  verification; those controls remain outstanding. Do not expose registration
+  publicly or mark the registration flow complete until the hashing, blocklist,
+  transport, persistence, and integration boundaries are implemented and
+  verified.
