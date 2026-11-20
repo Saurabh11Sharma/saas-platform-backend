@@ -102,10 +102,7 @@ function normalizeRegistrationPassword(value: unknown): string {
   }
 
   const normalized = value.normalize('NFC');
-  const length = countCodePointsWithinLimit(
-    normalized,
-    MAX_REGISTRATION_PASSWORD_CODE_POINTS,
-  );
+  const length = countCodePointsWithinLimit(normalized, MAX_REGISTRATION_PASSWORD_CODE_POINTS);
 
   if (length === null || length < MIN_REGISTRATION_PASSWORD_CODE_POINTS) {
     throw new InvalidRegistrationPasswordError();
