@@ -748,3 +748,43 @@
   publicly or mark the registration flow complete until the hashing, blocklist,
   transport, persistence, and integration boundaries are implemented and
   verified.
+
+
+## 2026-11-20 — Morning CI formatting follow-up
+
+- **Previous shared PR disposition:** PR #10 was created/updated on 2026-11-19,
+  had no submitted reviews, review threads, or conversation comments, was not a
+  draft, was up to date with main, and GitHub reported it mergeable. Its exact
+  head `6bc40665d4f2841f10f5b1696353c4167809c0ff` had completed successfully in
+  Actions run #44554470714, with Node 22.12.0, Node 26, and Docker Compose all
+  successful. It was squash-merged on 2026-11-20 at 03:26 UTC as main commit
+  `25aa7f16a70815a4dd174c966200f135bae876f7`. Main CI run #44667684472 passed
+  all three required jobs on that exact merge commit. No human PR was merged.
+- **Focus:** Resolve the formatting-only failure on the first head of PR #11.
+- **Diagnosis:** PR run #44668524314 completed with failure on exact head
+  `c5347ba9696983737f678b27af80426d97e5c0a5`. Both Node jobs passed locked
+  installation, typecheck, build, all 24 Identity and 3 Gateway tests, then
+  failed only at `npm run format:check` for
+  `apps/services/identity/src/application/register-identity.ts`. Docker
+  Compose completed successfully. The new password-policy call was split
+  across lines even though it fits the repository's Prettier print width.
+- **Change:** Collapsed that call to the configured Prettier layout. No
+  application behavior changed.
+- **Files changed:** `apps/services/identity/src/application/register-identity.ts`
+  and this log.
+- **Code commit:** `8f31663856defd0d7e11bfea71d2ca89e0905a02`.
+- **Validation:** PR run #44668732469 completed successfully on exact head
+  `8f31663856defd0d7e11bfea71d2ca89e0905a02`. Node 22.12.0 and Node 26 each
+  passed locked installation, typecheck, build, all 24 Identity and 3 Gateway
+  tests, Prettier, high-severity dependency audit, and service readiness/
+  gateway smoke. Docker Compose passed configuration validation, stack
+  build/runtime, Identity PostgreSQL role-isolation smoke, all application
+  readiness and Gateway integration checks, and cleanup. No local commands
+  were run because this execution has no repository shell/npm/Docker runtime.
+  This validates the code head; the daily-log follow-up creates a new PR head
+  that requires its own exact-head CI run.
+- **PR status:** PR #11 remains open on
+  `automation/saas-platform-2026-11-20`, based on main
+  `25aa7f16a70815a4dd174c966200f135bae876f7`, zero commits behind at this
+  check. It was created today and is not eligible for the next-day unreviewed
+  merge policy during this run.
