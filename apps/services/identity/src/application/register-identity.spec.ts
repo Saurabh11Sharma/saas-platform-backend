@@ -68,7 +68,7 @@ describe('RegisterIdentity', () => {
     assert.equal('passwordHash' in result, false);
   });
 
-  it('rejects passwords outside the 15-to-128 Unicode code point range before dependencies', async () => {
+  it('rejects short and overlong passwords before dependencies', async () => {
     const { useCase, created, hashedPasswords } = createHarness();
 
     await assert.rejects(
@@ -82,6 +82,16 @@ describe('RegisterIdentity', () => {
 
     assert.equal(hashedPasswords.length, 0);
     assert.equal(created.length, 0);
+  });
+
+  it('accepts the 128-code-point passphrase limit', async () => {
+    const { useCase, created, hashedPasswords } = createHarness();
+    const password = 'a'.repeat(128);
+
+    await useCase.execute({ email: 'ada@example.com', password });
+
+    assert.deepEqual(hashedPasswords, [password]);
+    assert.equal(created.length, 1);
   });
 
   it('normalizes passwords to NFC before hashing', async () => {

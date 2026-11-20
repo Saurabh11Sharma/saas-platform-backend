@@ -70,7 +70,14 @@ function getRegistrationFields(value: unknown): RegistrationFields | null {
 function countCodePointsWithinLimit(value: string, limit: number): number | null {
   let count = 0;
 
-  for (const _codePoint of value) {
+  for (let index = 0; index < value.length; index += 1) {
+    const current = value.charCodeAt(index);
+    const next = value.charCodeAt(index + 1);
+
+    if (current >= 0xd800 && current <= 0xdbff && next >= 0xdc00 && next <= 0xdfff) {
+      index += 1;
+    }
+
     count += 1;
     if (count > limit) {
       return null;
@@ -83,8 +90,8 @@ function countCodePointsWithinLimit(value: string, limit: number): number | null
 /**
  * Password-only registration follows the NIST SP 800-63B-4 single-factor
  * baseline: at least 15 Unicode code points. The 128-code-point cap supports
- * long passphrases while bounding password-hashing work. NFC normalization is
- * applied before validation and hashing; passwords are not trimmed or truncated.
+ * long passphrases while limiting input size. NFC normalization is applied
+ * before validation and hashing; passwords are not trimmed or truncated.
  */
 function normalizeRegistrationPassword(value: unknown): string {
   if (typeof value !== 'string') {
