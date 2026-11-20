@@ -79,6 +79,10 @@ describe('RegisterIdentity', () => {
       useCase.execute({ email: 'ada@example.com', password: 'a'.repeat(129) }),
       InvalidRegistrationPasswordError,
     );
+    await assert.rejects(
+      useCase.execute({ email: 'ada@example.com', password: 123 }),
+      InvalidRegistrationPasswordError,
+    );
 
     assert.equal(hashedPasswords.length, 0);
     assert.equal(created.length, 0);

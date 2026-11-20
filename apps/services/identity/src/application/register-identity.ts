@@ -74,7 +74,10 @@ function countCodePointsWithinLimit(value: string, limit: number): number | null
     const current = value.charCodeAt(index);
     const next = value.charCodeAt(index + 1);
 
-    if (current >= 0xd800 && current <= 0xdbff && next >= 0xdc00 && next <= 0xdfff) {
+    const isHighSurrogate = current >= 0xd800 && current <= 0xdbff;
+    const isLowSurrogate = next >= 0xdc00 && next <= 0xdfff;
+
+    if (isHighSurrogate && isLowSurrogate) {
       index += 1;
     }
 
