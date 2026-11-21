@@ -885,3 +885,58 @@
   Gateway checks, and cleaned up its CI-only volumes. This validates the README and daily-log
   formatting correction. No PostgreSQL repository/migration integration test ran.
 - **Highest-value next action:** Complete the first production-shaped Identity registration vertical slice: vetted adaptive hashing plus blocklist/abuse controls, then an Identity-owned migration and atomic repository adapter, validated bounded HTTP boundary, and real disposable-PostgreSQL integration tests executed in CI. Do not expose registration or mark it complete before those boundaries pass.
+
+## 2026-11-21 — Morning feature increment (08:30 IST)
+
+- **Focus:** Reject ill-formed UTF-16 passwords at the framework-independent
+  Identity registration boundary.
+- **Implemented:** The registration code-point counter continues to count a
+  valid surrogate pair as one Unicode code point and now rejects an unpaired
+  high or low surrogate. This check runs after NFC normalization and before
+  either outbound dependency, so malformed input cannot reach password
+  hashing or persistence.
+- **Files changed:**
+  - `apps/services/identity/src/application/register-identity.ts`
+  - `apps/services/identity/src/application/register-identity.spec.ts`
+  - `docs/progress/daily-log.md` (this entry)
+- **Code commit:** `8cf4e0a1301f3ab5506fda8a1af57ae663b37651`.
+- **Tests extended:** The existing registration password-boundary test now
+  covers unpaired high and low surrogates and asserts that neither
+  `PasswordHasher.hash` nor `IdentityRepository.create` is invoked. The
+  configured test count is unchanged.
+- **Validation:** No local npm, TypeScript, test, Prettier, audit, or Docker
+  commands were run because this execution has GitHub repository access but
+  no checked-out repository shell. PR CI [run #93](https://github.com/Saurabh11Sharma/saas-platform-backend/actions/runs/44863601370)
+  completed successfully on exact code commit
+  `8cf4e0a1301f3ab5506fda8a1af57ae663b37651`. Node 22.12.0 and Node 26 each
+  passed locked dependency installation, typecheck, build, all configured
+  workspace tests, Prettier, high-severity dependency audit, and service
+  readiness/Gateway smoke. Docker Compose passed configuration validation,
+  stack build/start, Identity PostgreSQL role-isolation smoke, application
+  readiness/Gateway checks, and cleanup. The PostgreSQL smoke remains a
+  privilege/DML check, not an Identity repository or migration integration
+  test. The daily-log commit below creates a new PR head requiring its own
+  exact-head Actions run.
+- **Midday handoff — same `RegisterIdentity` use case:** On success, the
+  use case normalizes the email into `EmailAddress`, NFC-normalizes and
+  validates the password, passes the complete password to `PasswordHasher`,
+  wraps the encoded result as `PasswordHash`, and calls
+  `IdentityRepository.create(NewIdentity)`. The repository must atomically
+  insert and return the `Identity` aggregate with its generated ID,
+  normalized email, password hash, and creation timestamp. Its port contract
+  remains `create(NewIdentity): Promise<Identity>`.
+- **Uniqueness and transaction invariants:** Enforce uniqueness on the
+  normalized email with a database constraint. Translate only that specific
+  constraint violation to `IdentityEmailAlreadyRegisteredError`; do not use
+  a read-before-write check. The insert is one local transaction; no
+  distributed transaction is required. Keep the schema and all persistence
+  inside Identity-owned `identity_db`. Migrations create objects as
+  `identity_owner`; `identity_app` remains limited to application DML.
+  Registration accepts no client-supplied tenant or role fields.
+- **Blockers / unverified:** There is still no vetted adaptive password
+  hasher, compromised/common-password blocklist, effective rate limiter,
+  bounded registration HTTP body policy, controller/provider, Identity-owned
+  migration/repository adapter, or real disposable-PostgreSQL repository
+  integration test. Do not expose registration publicly or mark it complete
+  until those security, transport, persistence, and integration boundaries
+  are implemented and verified.
