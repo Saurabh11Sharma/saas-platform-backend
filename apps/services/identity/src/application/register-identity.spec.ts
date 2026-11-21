@@ -68,7 +68,7 @@ describe('RegisterIdentity', () => {
     assert.equal('passwordHash' in result, false);
   });
 
-  it('rejects short and overlong passwords before dependencies', async () => {
+  it('rejects malformed and out-of-range passwords before dependencies', async () => {
     const { useCase, created, hashedPasswords } = createHarness();
 
     await assert.rejects(
@@ -81,6 +81,20 @@ describe('RegisterIdentity', () => {
     );
     await assert.rejects(
       useCase.execute({ email: 'ada@example.com', password: 123 }),
+      InvalidRegistrationPasswordError,
+    );
+    await assert.rejects(
+      useCase.execute({
+        email: 'ada@example.com',
+        password: 'a'.repeat(15) + '\ud800',
+      }),
+      InvalidRegistrationPasswordError,
+    );
+    await assert.rejects(
+      useCase.execute({
+        email: 'ada@example.com',
+        password: 'a'.repeat(15) + '\udc00',
+      }),
       InvalidRegistrationPasswordError,
     );
 
