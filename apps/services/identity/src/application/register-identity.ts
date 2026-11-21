@@ -27,6 +27,9 @@ interface RegistrationFields {
   readonly password: unknown;
 }
 
+const MIN_REGISTRATION_PASSWORD_CODE_POINTS = 15;
+const MAX_REGISTRATION_PASSWORD_CODE_POINTS = 128;
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) {
     return false;
@@ -64,6 +67,50 @@ function getRegistrationFields(value: unknown): RegistrationFields | null {
   };
 }
 
+function countCodePointsWithinLimit(value: string, limit: number): number | null {
+  let count = 0;
+
+  for (let index = 0; index < value.length; index += 1) {
+    const current = value.charCodeAt(index);
+    const next = value.charCodeAt(index + 1);
+
+    const isHighSurrogate = current >= 0xd800 && current <= 0xdbff;
+    const isLowSurrogate = next >= 0xdc00 && next <= 0xdfff;
+
+    if (isHighSurrogate && isLowSurrogate) {
+      index += 1;
+    }
+
+    count += 1;
+    if (count > limit) {
+      return null;
+    }
+  }
+
+  return count;
+}
+
+/**
+ * Password-only registration follows the NIST SP 800-63B-4 single-factor
+ * baseline: at least 15 Unicode code points. The 128-code-point cap supports
+ * long passphrases while limiting input size. NFC normalization is applied
+ * before validation and hashing; passwords are not trimmed or truncated.
+ */
+function normalizeRegistrationPassword(value: unknown): string {
+  if (typeof value !== 'string') {
+    throw new InvalidRegistrationPasswordError();
+  }
+
+  const normalized = value.normalize('NFC');
+  const length = countCodePointsWithinLimit(normalized, MAX_REGISTRATION_PASSWORD_CODE_POINTS);
+
+  if (length === null || length < MIN_REGISTRATION_PASSWORD_CODE_POINTS) {
+    throw new InvalidRegistrationPasswordError();
+  }
+
+  return normalized;
+}
+
 /**
  * Creates an Identity account without depending on NestJS or persistence details.
  *
@@ -84,11 +131,7 @@ export class RegisterIdentity {
     }
 
     const email = EmailAddress.create(fields.email);
-    const password = fields.password;
-
-    if (typeof password !== 'string' || password.length === 0) {
-      throw new InvalidRegistrationPasswordError();
-    }
+    const password = normalizeRegistrationPassword(fields.password);
 
     const passwordHash = await this.passwordHasher.hash(password);
     const identity = await this.identities.create({ email, passwordHash });
