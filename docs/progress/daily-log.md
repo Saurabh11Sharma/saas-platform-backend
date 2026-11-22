@@ -1163,3 +1163,58 @@
 - **Next action:** Provide an npm-capable implementation environment for the
   Identity-owned persistence and security adapters; do not add placeholder
   domain classes or expose registration prematurely.
+
+## 2026-11-22 — Service and API integration increment (11:30 IST)
+
+- **Focus:** Tighten the Gateway-to-service readiness contract for the existing
+  versioned downstream health endpoint.
+- **Implemented:** The Gateway now requires a successful HTTP response with a
+  JSON object whose `service` matches the configured target and whose
+  `status` is `ready`. Empty/204 responses, malformed JSON, mismatched
+  service names, non-ready statuses, non-success responses, network errors,
+  and timeouts are reported as unavailable. The 1.5-second timeout, internal
+  URL redaction, and degraded aggregate behavior are preserved.
+- **Files changed:**
+  - `apps/gateway/src/platform-health.controller.ts`
+  - `apps/gateway/src/platform-health.controller.spec.ts`
+  - `docs/progress/daily-log.md` (this entry)
+- **Code commit:** `0b6530555b31750e6535ba86031a77e6f30a8c10` — validate the
+  downstream readiness response contract.
+- **Tests authored:** Added one focused contract test covering a mismatched
+  service name, a non-ready status, malformed JSON, and an empty 204 response.
+  Updated success, failure, and timeout mocks to return the existing readiness
+  payload shape. The Gateway suite now contains 4 tests; Identity contains 24.
+- **Validation:** PR CI run
+  [#44994482781](https://github.com/Saurabh11Sharma/saas-platform-backend/actions/runs/44994482781)
+  completed successfully on exact code head
+  `0b6530555b31750e6535ba86031a77e6f30a8c10`. Node 22.12.0 and Node 26 both
+  passed `npm ci`, typecheck, build, all 28 configured tests (4 Gateway and
+  24 Identity), Prettier, `npm audit --audit-level=high` (0 vulnerabilities),
+  and service readiness/Gateway smoke. Docker Compose passed configuration
+  validation, stack build/start, Identity PostgreSQL role-isolation smoke,
+  container readiness/Gateway integration, and cleanup. Main CI run
+  [#44981110818](https://github.com/Saurabh11Sharma/saas-platform-backend/actions/runs/44981110818)
+  also passed all three required jobs on exact main SHA
+  `9fa7c1b4d4b5c8a38c5537fc8c1e7d18ea10bc6d`.
+- **Boundary review:** Each service remains the owner of its readiness
+  response; the Gateway consumes only the versioned
+  `/api/v1/health/ready` contract. The aggregate exposes service names and
+  availability only, not internal URLs or data. Health remains unauthenticated
+  and carries no tenant or business authorization; it must not be used as an
+  authorization signal. The existing 1.5-second timeout and unavailable
+  failure mapping are retained. No cross-service database or broker access
+  was introduced.
+- **Blockers / unverified:** No local commands were run because this execution
+  has GitHub repository operations but no checked-out shell. Identity still
+  lacks a PostgreSQL client, generated lockfile update, service-owned
+  migration, repository adapter, and real disposable-PostgreSQL integration
+  test. The vetted adaptive hasher, compromised-password controls, effective
+  rate limit, and bounded registration HTTP policy also remain outstanding.
+  Registration remains unexposed; the Compose PostgreSQL role smoke is not
+  application persistence coverage.
+- **Next action:** Use an npm-capable checkout to implement the existing
+  `IdentityRepository.create(NewIdentity)` port with an Identity-owned
+  migration and atomic normalized-email uniqueness, then run repository
+  integration tests against disposable PostgreSQL in CI. Do not expose the
+  registration endpoint until the credential-security and HTTP abuse
+  controls are implemented and tested.
