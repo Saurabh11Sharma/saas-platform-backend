@@ -77,8 +77,14 @@ function countCodePointsWithinLimit(value: string, limit: number): number | null
     const isHighSurrogate = current >= 0xd800 && current <= 0xdbff;
     const isLowSurrogate = next >= 0xdc00 && next <= 0xdfff;
 
-    if (isHighSurrogate && isLowSurrogate) {
+    if (isHighSurrogate) {
+      if (!isLowSurrogate) {
+        return null;
+      }
+
       index += 1;
+    } else if (current >= 0xdc00 && current <= 0xdfff) {
+      return null;
     }
 
     count += 1;
