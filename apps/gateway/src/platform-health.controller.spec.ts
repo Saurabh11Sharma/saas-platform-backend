@@ -2,15 +2,34 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { PlatformHealthController } from './platform-health.controller';
 
+const servicesByPort = new Map([
+  ['4101', 'identity'],
+  ['4102', 'tenant'],
+  ['4103', 'project'],
+  ['4104', 'billing'],
+  ['4105', 'notification'],
+  ['4106', 'audit'],
+]);
+
+function readyResponse(input: Parameters<typeof fetch>[0]): Response {
+  const service = servicesByPort.get(new URL(String(input)).port);
+  assert.ok(service);
+
+  return new Response(JSON.stringify({ service, status: 'ready' }), {
+    status: 200,
+    headers: { 'content-type': 'application/json' },
+  });
+}
+
 describe('PlatformHealthController', () => {
-  it('reports healthy services without exposing their internal URLs', async () => {
+  it('reports contract-compliant services without exposing their internal URLs', async () => {
     const originalFetch = globalThis.fetch;
     const requestedUrls: string[] = [];
 
     const successfulFetch: typeof fetch = async (input, init) => {
       requestedUrls.push(String(input));
       assert.ok(init?.signal);
-      return new Response(null, { status: 204 });
+      return readyResponse(input);
     };
 
     globalThis.fetch = successfulFetch;
@@ -48,7 +67,7 @@ describe('PlatformHealthController', () => {
         throw new Error('connection refused');
       }
 
-      return new Response(null, { status: 204 });
+      return readyResponse(input);
     };
 
     globalThis.fetch = mixedFetch;
@@ -68,6 +87,57 @@ describe('PlatformHealthController', () => {
       assert.ok(
         result.services
           .filter((service) => !['identity', 'tenant'].includes(service.name))
+          .every((service) => service.status === 'ok'),
+      );
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+
+  it('rejects successful responses that do not satisfy the versioned readiness contract', async () => {
+    const originalFetch = globalThis.fetch;
+
+    const contractFetch: typeof fetch = async (input) => {
+      const port = new URL(String(input)).port;
+
+      if (port === '4101') {
+        return new Response(JSON.stringify({ service: 'tenant', status: 'ready' }), {
+          status: 200,
+        });
+      }
+
+      if (port === '4102') {
+        return new Response(JSON.stringify({ service: 'tenant', status: 'starting' }), {
+          status: 200,
+        });
+      }
+
+      if (port === '4103') {
+        return new Response('not-json', { status: 200 });
+      }
+
+      if (port === '4104') {
+        return new Response(null, { status: 204 });
+      }
+
+      return readyResponse(input);
+    };
+
+    globalThis.fetch = contractFetch;
+
+    try {
+      const result = await new PlatformHealthController().getPlatformHealth();
+
+      assert.equal(result.status, 'degraded');
+      for (const serviceName of ['identity', 'tenant', 'project', 'billing']) {
+        assert.equal(
+          result.services.find((service) => service.name === serviceName)?.status,
+          'unavailable',
+        );
+      }
+      assert.ok(
+        result.services
+          .filter((service) => ['notification', 'audit'].includes(service.name))
           .every((service) => service.status === 'ok'),
       );
     } finally {
@@ -101,7 +171,7 @@ describe('PlatformHealthController', () => {
         });
       }
 
-      return new Response(null, { status: 204 });
+      return readyResponse(input);
     };
 
     globalThis.fetch = timeoutFetch;

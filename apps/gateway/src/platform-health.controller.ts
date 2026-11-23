@@ -9,6 +9,19 @@ const targets = [
   { name: 'audit', url: process.env.AUDIT_URL ?? 'http://localhost:4106' },
 ];
 
+function isExpectedReadinessPayload(payload: unknown, expectedService: string): boolean {
+  if (typeof payload !== 'object' || payload === null || Array.isArray(payload)) {
+    return false;
+  }
+
+  return (
+    'service' in payload &&
+    payload.service === expectedService &&
+    'status' in payload &&
+    payload.status === 'ready'
+  );
+}
+
 @Controller('platform')
 export class PlatformHealthController {
   @Get('health')
@@ -22,9 +35,15 @@ export class PlatformHealthController {
             signal: AbortSignal.timeout(1500),
           });
 
+          if (!response.ok) {
+            return { name: target.name, status: 'unavailable' };
+          }
+
+          const payload: unknown = await response.json();
+
           return {
             name: target.name,
-            status: response.ok ? 'ok' : 'unavailable',
+            status: isExpectedReadinessPayload(payload, target.name) ? 'ok' : 'unavailable',
           };
         } catch {
           return { name: target.name, status: 'unavailable' };
