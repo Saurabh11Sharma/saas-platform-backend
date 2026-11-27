@@ -1469,10 +1469,9 @@ no checked-out Node/npm/Docker environment. It cannot safely install a PostgreSQ
 driver, regenerate the npm lockfile, implement and execute a migration, or run
 disposable-PostgreSQL repository integration tests.
 
-Highest-value next action: fix the remaining Prettier formatting difference in
-docs/progress/daily-log.md, then require a successful exact-head CI run before
-considering PR #18 green. After that, restore an npm-capable checked-out environment
-for the midday slot to complete the existing Identity-owned PostgreSQL migration
-and atomic repository adapter with real disposable-PostgreSQL integration tests.
-Keep registration unexposed until credential hashing, compromised-password
-screening, bounded HTTP validation, and effective rate limiting are also verified.
+Highest-value next action: restore an npm-capable checked-out Node/npm/Docker
+environment for the midday slot, then complete the existing Identity-owned
+PostgreSQL migration and atomic repository adapter with real disposable-PostgreSQL
+integration tests executed in CI. Keep registration unexposed until credential
+hashing, compromised-password screening, bounded HTTP validation, and effective
+rate limiting are also verified.
