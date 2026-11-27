@@ -1402,14 +1402,77 @@
 
 ## 2026-11-27 — Evening documentation and daily review (20:30 IST)
 
-- **Run record:** Evening automation run `b6966f32-6e4c-832c-9ba6-f778c445793b` was scheduled for 20:30 IST and started at 23:15:38 IST (2 hours 45 minutes late). It was still recorded as in progress when this entry was prepared; no completion timestamp was available.
-- **Main branch and same-day history:** Latest main is `52d743158cea50b740b7f9c2985b510cca5efb15`. The inspected 27 November main history contains one commit: the squash merge of PR [#17](https://github.com/Saurabh11Sharma/saas-platform-backend/pull/17), changing only `docs/progress/daily-log.md`. Exact-head main push run [#45933767118](https://github.com/Saurabh11Sharma/saas-platform-backend/actions/runs/45933767118) (run #129) completed successfully on that SHA. Node 22.12.0, Node 26, and Docker Compose build/runtime all passed.
-- **Morning slot (08:30 IST):** Automation run `b3b73b0f-4910-8331-824e-7327d2beefc0` was scheduled for 08:30, started at 08:57:16, and completed at 09:00:30 IST (about 27 minutes late). It conditionally merged the previous shared PR #17 and created today's shared PR [#18](https://github.com/Saurabh11Sharma/saas-platform-backend/pull/18) on `automation/saas-platform-2026-11-27`. No new application feature or test was justified or added. Its two commits, `77b491e6ffb5b805184e1ebbc9e698bcedf3efe7` and `d18968df943343dc1e351ec09094e21661a1fb73`, changed only this daily log. PR exact-head run [#45934515969](https://github.com/Saurabh11Sharma/saas-platform-backend/actions/runs/45934515969) (run #130) subsequently completed successfully on `d18968df943343dc1e351ec09094e21661a1fb73`: both Node jobs and Docker Compose passed.
-- **Midday slot (11:30 IST):** No 27 November run is recorded. The recurring service/API automation is disabled (it was disabled after its 26 November run); its latest recorded run is `bc12399d-3e74-8330-b766-815cd8ec4d5e` on 26 November. No 27 November commit, file change, test, or validation can be attributed to this slot. The persistence handoff therefore did not advance today.
-- **Evening review outcome:** Reviewed the current README, Development Standards, system architecture, service boundaries, ADR-0003, roadmap, CI workflow and guide, Compose configuration, Identity registration use case/domain/ports, same-day main history, shared PR diff, PR reviews/comments/threads, and exact-head CI results. README.md, `docs/ci-cd.md`, and `docs/roadmap.md` match the implementation and its stated limits; no source, test, CI, Compose, or roadmap checkbox change was justified. This entry is the only evening change.
-- **Tests and validation:** No tests were authored and no local `npm ci`, typecheck, build, test, Prettier, audit, Docker, migration, or PostgreSQL repository-integration command was run by the morning or evening slot. On main run #129 and PR run #130, both Node matrix jobs executed the configured workspace suite: Gateway 4/4 and Identity 24/24 tests passed (28 total per Node job), along with locked install, typecheck, build, formatting, high-severity dependency audit, and process smoke. The Compose job on both runs validated configuration, built and started the stack, passed the real PostgreSQL role-isolation/DML smoke, passed container readiness/Gateway integration, and cleaned up. This is not an Identity migration or repository-adapter integration test; no application process currently connects to PostgreSQL.
-- **Architecture and quality assessment:** The Gateway, Identity, Tenant, Project, and Billing remain separate runnable NestJS processes. Identity domain/application code remains framework-independent, and the PostgreSQL role smoke preserves the Identity-only `identity_db` boundary with a DML-only runtime role; no cross-service database access was introduced. However, no service-owned application persistence adapter or migration exists, and backend applications do not connect to PostgreSQL, MongoDB, Redis, or RabbitMQ. Identity registration remains an application-only use case without a concrete password hasher or HTTP endpoint. Tenant authorization/isolation, RabbitMQ application integration, runnable Web/Notification/Audit apps, OpenTelemetry instrumentation, and deployment remain unimplemented. Lint is not a CI gate. No roadmap item was promoted to complete.
-- **Blockers:** The midday automation remains disabled, and this GitHub-only execution has no checked-out Node/npm/Docker environment. It cannot safely install a PostgreSQL driver, regenerate the npm lockfile, implement and execute a migration, or run disposable-PostgreSQL repository integration tests. No code or test result is inferred from repository file presence.
-- **Single highest-value next action:** Restore an npm-capable checked-out Node/npm/Docker environment for the midday slot, then complete the existing Identity-owned PostgreSQL migration and atomic repository adapter with real disposable-PostgreSQL integration tests executed in CI. Keep registration unexposed until credential hashing, compromised-password screening, bounded HTTP validation, and effective rate limiting are also verified.
+Evening run: ID b6966f32-6e4c-832c-9ba6-f778c445793b was scheduled for 20:30 IST and
+started at 23:15:38 IST, 2 hours 45 minutes late. It was still recorded as in progress
+when this entry was prepared; no completion timestamp was available.
 
-- **PR CI follow-up:** Exact-head PR run [#46044715878](https://github.com/Saurabh11Sharma/saas-platform-backend/actions/runs/46044715878) (run #131) completed with failure on `c55b777fabd5a8ba513e8b8197f10350035545e4`. Both Node jobs passed typecheck, build, and all 28 configured workspace tests, then failed at `npm run format:check` on `docs/progress/daily-log.md`; the subsequent audit and process-smoke steps were skipped. The Docker Compose job passed configuration validation, build/startup, PostgreSQL role-isolation smoke, readiness/Gateway smoke, and cleanup. Inspection found an extra blank line before this section and an unclosed inline-code span in the morning CI sentence; both Markdown defects are corrected in this follow-up. The corrected head requires its own CI result before the PR can be considered green.
+Main branch: latest main is 52d743158cea50b740b7f9c2985b510cca5efb15. The inspected
+27 November main history contains one commit, the squash merge of PR #17. It changed
+only docs/progress/daily-log.md. Exact-head main push run #129 completed successfully
+on that SHA: Node 22.12.0, Node 26, and Docker Compose all passed.
+
+Morning slot: run b3b73b0f-4910-8331-824e-7327d2beefc0 was scheduled for 08:30 IST,
+started at 08:57:16, and completed at 09:00:30 IST, about 27 minutes late. It merged
+the previous shared PR #17 and created PR #18 on
+automation/saas-platform-2026-11-27. No new application feature or test was justified.
+Commits 77b491e6ffb5b805184e1ebbc9e698bcedf3efe7 and
+d18968df943343dc1e351ec09094e21661a1fb73 changed only this daily log. PR run #130
+passed all three required jobs on the exact d18968df943343dc1e351ec09094e21661a1fb73
+head.
+
+Midday slot: no 27 November run is recorded. The recurring service/API automation
+remains disabled after its 26 November run. Its latest recorded run is
+bc12399d-3e74-8330-b766-815cd8ec4d5e on 26 November. No 27 November commit, file
+change, test, or validation can be attributed to this slot. The persistence handoff
+did not advance today.
+
+Evening review: README.md, Development Standards, system architecture, service
+boundaries, ADR-0003, roadmap, CI workflow and guide, Compose configuration, Identity
+registration use case/domain/ports, same-day main history, PR diff, reviews/comments/
+threads, and exact-head CI results were inspected. README.md, docs/ci-cd.md, and
+docs/roadmap.md match the implementation and its stated limits. No source, test, CI,
+Compose, or roadmap checkbox change was justified. Only this daily log was changed.
+
+Tests and validation: no tests were authored and no local npm ci, typecheck, build,
+test, Prettier, audit, Docker, migration, or PostgreSQL repository-integration command
+was run by the morning or evening slot. Main run #129 and PR run #130 executed the
+configured suite in both Node jobs: Gateway 4/4 and Identity 24/24 tests passed,
+28 total per Node job. Both runs also passed locked install, typecheck, build,
+formatting, high-severity dependency audit, and process smoke. Their Compose jobs
+validated configuration, built and started the stack, passed PostgreSQL role-isolation
+and disposable DML smoke, passed container readiness/Gateway integration, and cleaned
+up. This is not an Identity migration or repository-adapter integration test; no
+application process currently connects to PostgreSQL.
+
+PR CI follow-up: run #131 on c55b777fabd5a8ba513e8b8197f10350035545e4 and run #132
+on f6a47e7fc08f029423301bfed1fe196547374fa6 both completed with failure. In each run,
+both Node jobs passed typecheck, build, and all 28 configured tests, then failed at
+format:check on docs/progress/daily-log.md; the later audit and process-smoke steps
+were skipped. The Docker Compose job passed all steps in both runs. The first
+formatting correction did not resolve the remaining Prettier difference. The exact
+formatting discrepancy is still unresolved and must be fixed before PR #18 is green.
+
+Architecture and quality: the Gateway, Identity, Tenant, Project, and Billing remain
+separate runnable NestJS processes. Identity domain/application code remains
+framework-independent, and the PostgreSQL role smoke preserves the Identity-only
+identity_db boundary with a DML-only runtime role. No cross-service database access
+was introduced. However, no service-owned application persistence adapter or
+migration exists, and backend applications do not connect to PostgreSQL, MongoDB,
+Redis, or RabbitMQ. Identity registration remains an application-only use case
+without a concrete password hasher or HTTP endpoint. Tenant authorization/isolation,
+RabbitMQ application integration, runnable Web/Notification/Audit apps, OpenTelemetry
+instrumentation, and deployment remain unimplemented. Lint is not a CI gate. No
+roadmap item was promoted to complete.
+
+Blockers: the midday automation remains disabled, and this GitHub-only execution has
+no checked-out Node/npm/Docker environment. It cannot safely install a PostgreSQL
+driver, regenerate the npm lockfile, implement and execute a migration, or run
+disposable-PostgreSQL repository integration tests.
+
+Highest-value next action: fix the remaining Prettier formatting difference in
+docs/progress/daily-log.md, then require a successful exact-head CI run before
+considering PR #18 green. After that, restore an npm-capable checked-out environment
+for the midday slot to complete the existing Identity-owned PostgreSQL migration
+and atomic repository adapter with real disposable-PostgreSQL integration tests.
+Keep registration unexposed until credential hashing, compromised-password
+screening, bounded HTTP validation, and effective rate limiting are also verified.
