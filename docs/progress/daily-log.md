@@ -1517,6 +1517,7 @@ persistence slice, not another application use case.
 Files changed this run: docs/progress/daily-log.md only. No application, domain, API,
 test, dependency, migration, infrastructure, or workflow files changed. No feature
 or roadmap item is claimed complete; no application/code commit was made.
+Initial run-record append commit: `2755f1137ef3e4ff445bc93c86b71c67c564c8aa`.
 
 Inspection and validation: reviewed README.md, Development Standards, system
 architecture, service boundaries, ADR-0001/0002/0003, roadmap, CI workflow, root and
