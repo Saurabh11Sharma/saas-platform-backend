@@ -1483,3 +1483,70 @@ f6a47e7fc08f029423301bfed1fe196547374fa6,
 docs/progress/daily-log.md. Exact-head PR run #134 completed successfully on
 9ad4eea7381835020bb0b53352c6601dac159fde with Node 22.12.0, Node 26, and
 Docker Compose all successful.
+
+
+## 2026-11-28 — Morning feature increment (08:30 IST)
+
+Morning run: the previous shared PR #18 was created and last updated on 27 November. It was
+open, non-draft, up to date with main, and GitHub reported it mergeable. The full PR diff
+changed only docs/progress/daily-log.md. There were no submitted reviews, review threads,
+inline comments, or conversation comments. Exact-head PR run #135 passed Node 22.12.0,
+Node 26, and Docker Compose on fc318348def664e6dd11eaa02d5188028b04bb8d. Under the
+owner's conditional-merge authorization, PR #18 was squash-merged with that exact
+expected head. GitHub confirmed merge commit
+513783521eda504ba08a1713b25778002b0ace15.
+
+Main branch: the new main SHA is 513783521eda504ba08a1713b25778002b0ace15. Its diff
+changes only docs/progress/daily-log.md. Push run #136 is associated with this exact
+SHA and is in progress; Node 22.12.0, Node 26, and Docker Compose jobs are all still
+running. The preceding main run #129 passed all three required jobs on
+52d743158cea50b740b7f9c2985b510cca5efb15.
+
+Outcome: no additional framework-independent domain/application feature was safe to
+introduce. The existing Identity RegisterIdentity use case already validates the
+request shape, normalizes EmailAddress, enforces the 15–128 Unicode-code-point
+password policy with NFC normalization and malformed UTF-16 rejection, hashes before
+persistence, and propagates the duplicate-email domain conflict. Identity aggregate
+invariants, PasswordHash redaction, IdentityRepository and PasswordHasher ports, and
+focused unit tests are already present. Tenant, Project, and Billing remain process
+shells without business use cases. Adding login/session behavior before a persisted
+credential lookup, vetted password verifier, session lifecycle, and revocation policy
+would be speculative. The next real milestone is the existing registration
+persistence slice, not another application use case.
+
+Files changed this run: docs/progress/daily-log.md only. No application, domain, API,
+test, dependency, migration, infrastructure, or workflow files changed. No feature
+or roadmap item is claimed complete; no application/code commit was made.
+
+Inspection and validation: reviewed README.md, Development Standards, system
+architecture, service boundaries, ADR-0001/0002/0003, roadmap, CI workflow, root and
+Identity package scripts, Identity domain/application files and tests, recent main
+history, the complete PR #18 diff, review submissions, review threads, conversation
+comments, branch comparison, and exact-head Actions runs. PR #18 run #135 passed all
+three required jobs. Main run #136 remains in progress on the exact new main SHA.
+No local npm ci, typecheck, build, tests, Prettier, audit, Docker, migration, or
+PostgreSQL repository-integration command was run because this execution has GitHub
+repository operations but no checked-out shell/npm/Docker environment. No tests were
+authored or locally executed in this slot.
+
+Midday handoff — existing RegisterIdentity use case: continue with
+IdentityRepository.create(NewIdentity): Promise<Identity>; do not add a parallel
+registration use case. Implement one atomic insert into Identity-owned identity_db,
+returning the persisted aggregate with generated ID and creation timestamp. Enforce
+uniqueness on normalized EmailAddress.value with a database constraint rather than
+a read-before-write check, and translate only that matching uniqueness violation
+into IdentityEmailAlreadyRegisteredError. One local transaction is sufficient; no
+distributed transaction is required. Run migrations as identity_owner and keep
+identity_app DML-only. No other service may access this database. The adapter,
+migration, npm-managed PostgreSQL driver, and real disposable-PostgreSQL repository
+tests remain unimplemented. Keep registration unexposed until a vetted adaptive
+password hasher, compromised-password screening, bounded HTTP validation, effective
+rate limiting, and repository integration coverage are implemented and verified.
+
+Blockers / next action: this GitHub-only execution cannot install a PostgreSQL driver
+through npm, regenerate and verify package-lock.json, run local tests, or execute
+repository integration tests against disposable PostgreSQL. The highest-value next
+step is to provide the midday slot with an npm-capable Node/npm/Docker checkout so it
+can complete the existing Identity persistence adapter and migration with real
+database tests in CI. Do not hand-edit the lockfile or treat the Compose role-isolation
+smoke as application repository coverage.
